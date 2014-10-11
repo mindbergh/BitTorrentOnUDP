@@ -1,0 +1,59 @@
+Function Prototypes
+
+
+
+typedef struct job_s {
+	int num_chunk;
+	chunk_t chunks;
+}
+
+typedef struct chunk_s {
+	int id;
+	char hash[SHA1_HASH_SIZE*2+1];
+	char *data;
+	int num_p;
+	bt_peer_t *p;
+} chunk_t;
+
+
+typedef struct provider
+
+
+
+
+/** Generate WhoHas package
+ *
+ */
+queue_t *WhoHas_maker(char *getchunkfile) {
+	// to do parse getchunkfile	
+}
+
+void Send_WhoHas(data_packet_t*, config*) {
+	while
+}
+
+int packet_parser(data_packet_t *) {
+	return type number
+}
+
+
+data_packet_t *Ihave_maker() {
+	// how many chunks are requested
+	// how many of them i have
+	// make IHave packet
+	// return Ihave packet
+}
+
+void packet_sender(data_packet_t *, (struct sockaddr *) from) {
+	
+}
+
+
+
+
+
+
+
+Helpers
+
+queue

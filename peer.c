@@ -22,13 +22,12 @@
 #include "input_buffer.h"
 #include "job.h"
 
-bt_config_t config;
-
 /* Function Prototypes */
 void peer_run(bt_config_t *config);
 
 /* Global variables */
 job_t job;
+bt_config_t config;
 
 
 
@@ -89,7 +88,7 @@ void process_get(char *chunkfile, char *outputfile) {
     /* Create a Job */
     job_init(job,chunkfile);
     
-    //call whohasmaker
+    /* call whohasmaker */
     //send out all whohas packets
 }
 

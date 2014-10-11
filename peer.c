@@ -21,11 +21,20 @@
 #include "bt_parse.h"
 #include "input_buffer.h"
 #include "queue.h"
+#include "job.h"
 
+
+
+
+/* Function Prototypes */
 void peer_run(bt_config_t *config);
 
+/* Global variables */
+job_t job;
+bt_config_t config;
+
+
 int main(int argc, char **argv) {
-    bt_config_t config;
 
     bt_init(&config, argc, argv);
 
@@ -79,6 +88,9 @@ void process_inbound_udp(int sock) {
 void process_get(char *chunkfile, char *outputfile) {
     printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n", 
     chunkfile, outputfile);
+    /* Create a Job */
+    job_init(job,chunkfile);
+    
     //call whohasmaker
     //send out all whohas packets
 }

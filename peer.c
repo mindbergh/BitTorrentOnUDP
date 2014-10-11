@@ -1,9 +1,9 @@
 /*
  * peer.c
  *
- * Authors: Ed Bardsley <ebardsle+441@andrew.cmu.edu>,
- *          Dave Andersen
- * Class: 15-441 (Spring 2005)
+ * Authors: Ming Fang <mingf@andrew.cmu.edu>,
+ *          
+ * Class: 15-441 (Fall 2014)
  *
  * Skeleton for 15-441 Project 2.
  *

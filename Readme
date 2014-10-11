@@ -4,8 +4,8 @@ Yao
 
 typedef struct job_s {
 	int num_chunk;
-	chunk_t chunks;
-}
+	chunk_t* chunks;
+} job_t;
 
 typedef struct chunk_s {
 	int id;

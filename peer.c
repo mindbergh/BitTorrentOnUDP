@@ -20,7 +20,12 @@
 #include "spiffy.h"
 #include "bt_parse.h"
 #include "input_buffer.h"
+#include "queue.h"
 #include "job.h"
+
+
+
+
 
 /* Function Prototypes */
 void peer_run(bt_config_t *config);

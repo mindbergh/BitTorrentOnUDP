@@ -22,8 +22,6 @@
 #include "input_buffer.h"
 #include "queue.h"
 #include "job.h"
-#include "abc"
-#include "yao"
 
 
 
@@ -55,7 +53,7 @@ int main(int argc, char **argv) {
         bt_dump_config(&config);
     }
 #endif
-    
+
     peer_run(&config);
     return 0;
 }
@@ -81,18 +79,18 @@ void process_inbound_udp(int sock) {
 
 
     printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
-           "Incoming message from %s:%d\n%s\n\n", 
+           "Incoming message from %s:%d\n%s\n\n",
             inet_ntoa(from.sin_addr),
             ntohs(from.sin_port),
             buf);
 }
 
 void process_get(char *chunkfile, char *outputfile) {
-    printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n", 
+    printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n",
     chunkfile, outputfile);
     /* Create a Job */
     job_init(job,chunkfile);
-    
+
     /* call whohasmaker */
     //send out all whohas packets
 }
@@ -116,41 +114,41 @@ void peer_run(bt_config_t *config) {
     struct sockaddr_in myaddr;
     fd_set readfds;
     struct user_iobuf *userbuf;
-    
+
     if ((userbuf = create_userbuf()) == NULL) {
         perror("peer_run could not allocate userbuf");
         exit(-1);
     }
-    
+
     if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1) {
         perror("peer_run could not create socket");
         exit(-1);
     }
-    
+
     bzero(&myaddr, sizeof(myaddr));
     myaddr.sin_family = AF_INET;
     myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     myaddr.sin_port = htons(config->myport);
-    
+
     if (bind(sock, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {
         perror("peer_run could not bind socket");
         exit(-1);
     }
-    
+
     spiffy_init(config->identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
-    
+
     while (1) {
         int nfds;
         FD_SET(STDIN_FILENO, &readfds);
         FD_SET(sock, &readfds);
-        
+
         nfds = select(sock+1, &readfds, NULL, NULL, NULL);
-        
+
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
                 process_inbound_udp(sock);
             }
-            
+
             if (FD_ISSET(STDIN_FILENO, &readfds)) {
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");

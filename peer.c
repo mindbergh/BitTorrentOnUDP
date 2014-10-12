@@ -22,11 +22,11 @@
 #include "input_buffer.h"
 #include "queue.h"
 #include "job.h"
-#include "test"
 
 
 /* Function Prototypes */
 void peer_run(bt_config_t *config);
+void freeJob(job_t* job);
 
 /* Global variables */
 job_t job;
@@ -86,13 +86,27 @@ void process_inbound_udp(int sock) {
 }
 
 void process_get(char *chunkfile, char *outputfile) {
+    int i = 0;
     printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n",
     chunkfile, outputfile);
     /* Create a Job */
     job_init(job,chunkfile);
 
     /* call whohasmaker */
-    //send out all whohas packets
+    queue_t* whoHasQueue = WhoHas_maker();
+    /* send out all whohas packets */
+    node_s* tmp = whoHasQueue->head;
+    while(i < whoHasQueue->n) {
+        Send_WhoHas((char*)tmp->data, &config);
+        tmp = tmp->next;
+        i++;
+    }
+    
+    
+    
+    /* free current job content */
+    freeJob(job);
+    
 }
 
 void handle_user_input(char *line, void *cbdata) {
@@ -157,9 +171,16 @@ void peer_run(bt_config_t *config) {
     }
 }
 
-/** Generate WhoHas package
- *
- */
-queue_t *WhoHas_maker(char *getchunkfile) {
-    // to do parse getchunkfile 
+void freeJob(job_t* job) {
+
+    int i = 0;
+    /* free each chunks */
+    while (i < job->num_chunk) {
+        free((job->chunks[i])->data);
+        free((job->chunks[i])->p);
+        free(job->chunks[i]);
+        i++;
+    }
+    job->chunks = NULL;
+    job->num_chunk = 0;
 }

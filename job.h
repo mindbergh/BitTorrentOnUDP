@@ -49,5 +49,12 @@ typedef struct data_packet {
 
 int init_job(job_t * ob, char* chunkFile);
 int if_Finished(job_t * job);
+void Send_WhoHas(data_packet_t*);
+void packet_sender(data_packet_t* data, struct sockaddr * to);
+queue_t *WhoHas_maker(void);
+char *whohas_data_maker(int num_chunk, chunk_t *chunks);
+data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
+void packet_free(data_packet_t *pkg);
+
 
 #endif

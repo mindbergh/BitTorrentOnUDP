@@ -27,11 +27,12 @@
 /* Function Prototypes */
 void peer_run(bt_config_t *config);
 void freeJob(job_t* job);
+void init_hasChunk(char* has_chunk_file);
 
 /* Global variables */
 job_t job;
 bt_config_t config;
-
+queue_t* hasChunk;
 
 
 int main(int argc, char **argv) {
@@ -61,6 +62,7 @@ int main(int argc, char **argv) {
 
 void process_inbound_udp(int sock) {
     #define BUFLEN 1500
+    int packet_type = -1;
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[BUFLEN];
@@ -68,15 +70,43 @@ void process_inbound_udp(int sock) {
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr *) &from, &fromlen);
 
-
     // call packet_parser
+    packet_type = packet_parser(buf);
     // switch on packet type
-    // case WhoHas
-        // call Ihave maker
-        // call packet sender
-    // case IHave
-        // call GET maker
+    switch(packet_type) {
+        // case WhoHas
+        case PKG_WHOHAS: {
+            // call Ihave maker
+            // call packet sender
+            break;
+        }
 
+        case PKG_IHAVE: {
+            // call GET maker
+            break;
+        }
+        case PKG_GET: {
+            break;
+        }
+
+        case PKG_DATA: {
+            break;
+        }
+
+        case PKG_ACK: {
+            break;
+        }
+        
+        case PKG_DENIED: {
+            break;
+        }
+
+        case default: {
+            // Invalid packet
+            fprintf(stderr,"Invalid Packet!\n");
+            break;
+        }
+    }
 
     printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
            "Incoming message from %s:%d\n%s\n\n",
@@ -96,13 +126,14 @@ void process_get(char *chunkfile, char *outputfile) {
     queue_t* whoHasQueue = WhoHas_maker();
     /* send out all whohas packets */
     node_s* tmp = whoHasQueue->head;
+    node_s* last = tmp;
     while(i < whoHasQueue->n) {
+        last = tmp;
         Send_WhoHas((char*)tmp->data, &config);
         tmp = tmp->next;
+        packet_free(last);
         i++;
     }
-    
-    
     
     /* free current job content */
     freeJob(job);
@@ -151,6 +182,9 @@ void peer_run(bt_config_t *config) {
 
     spiffy_init(config->identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
 
+    /* load my local chunk file list */
+    init_hasChunk(config.has_chunk_file);
+
     while (1) {
         int nfds;
         FD_SET(STDIN_FILENO, &readfds);
@@ -171,16 +205,25 @@ void peer_run(bt_config_t *config) {
     }
 }
 
-void freeJob(job_t* job) {
+void init_hasChunk(char* has_chunk_file) {
 
-    int i = 0;
-    /* free each chunks */
-    while (i < job->num_chunk) {
-        free((job->chunks[i])->data);
-        free((job->chunks[i])->p);
-        free(job->chunks[i]);
-        i++;
-    }
-    job->chunks = NULL;
-    job->num_chunk = 0;
+    FILE* file = fopen(has_chunk_file,"r");
+    char read_buffer[BUF_SIZE];
+    char hash_buffer[SHA1_HASH_SIZE*2];
+    
+    hasChunk = queue_init();
+    
+    while (fgets(read_buffer,BUF_SIZE,file)) {
+        chunks_t* chunk = malloc(sizeof(chunk_t));
+        sscanf(buf,"%d %s",&(chunk->id),hash_buffer);
+        
+        /* convert ascii to binary hash code */
+        hex2binary(hash_buffer,SHA1_HASH_SIZE*2,chunk->hash);
+        enqueue(hasChunk,chunk);
+
+        memset(read_buffer,0,BUF_SIZE);
+        memset(hash_buffer,0,SHA1_HASH_SIZE*2);
+    } 
+    flose(file);  
+
 }

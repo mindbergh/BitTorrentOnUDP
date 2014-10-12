@@ -102,6 +102,51 @@ char *whohas_data_maker(int num_chunk, chunk_t *chunks) {
     return data;
 }
 
+data_packet_t *IHave_maker(data_packet_t *whohas_pkg) {
+    // how many chunks are requested
+    // how many of them i have
+    // make IHave packet
+    // return Ihave packet
+    int req_num;
+    int n = 0;
+    int i;
+    char rawdata[PACKETLEN];
+    char *hash_start;
+    data_packet_t *pkg;
+
+    assert(whohas_pkg->header.packet_type == PKG_WHOHAS);
+
+    req_num = whohas_pkg->data[0];
+    hash_start = whohas_pkg->data[4];
+    for (i = 0; i < req_num; i++) {
+        if (IfIHave(hash_start, hasChunk)) {
+            n += SHA1_HASH_SIZE;
+            memcpy(rawdata+n, hash_start, SHA1_HASH_SIZE);
+        }
+        hash_start += SHA1_HASH_SIZE;
+    }
+    char *data = (char *)malloc(n);
+    memcpy(data, rawdata, n*SHA1_HASH_SIZE);
+    pkg = packet_maker(PKG_IHAVE, 16 + 4 + n, 0, 0, data);
+    return pkg;
+}
+
+
+int IfIHave(hash_start, hasChunk) {
+    int i;
+    node_t *node;
+    if (hasChunk.n == 0)
+        return 0;
+    node = hashChunk.head;
+    for (i = 0; i < hasChunk.n; i++) {
+        if (memcmp(hash_start, (char *)node->data), SHA1_HASH_SIZE) {
+            node = node->next;
+            continue;
+        }                
+        return 1
+    }
+    return 0;
+}
 
 
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data) {

@@ -28,7 +28,7 @@ typedef struct chunk_s {
 	char hash[SHA1_HASH_SIZE];
 	char *data;
 	int num_p;
-	bt_peer_t *p;
+	bt_peer_t *p; /* providers */
 } chunk_t;
 
 

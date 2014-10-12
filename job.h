@@ -30,7 +30,7 @@ typedef struct chunk_s {
 	int num_p;
 	bt_peer_t *p; /* providers */
 } chunk_t;
-
+ 
 
 typedef struct header_s {
     short magicnum;

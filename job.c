@@ -9,7 +9,7 @@
 extern bt_config_t config;
 extern job_t job;
 
-int init_job(job_t * job, char* chunkFile) {
+int init_job(char* chunkFile) {
     FILE* file = fopen(chunkFile,"r");
     int ch,line_number = 0;
     int i = 0;
@@ -22,33 +22,49 @@ int init_job(job_t * job, char* chunkFile) {
     }
     memset(read_buffer,0,BUF_SIZE);
     
-    job->num_chunk = line_number;
-    job->chunks = malloc(sizeof(chunk_t) * job->num_chunk);
+    job.num_chunk = line_number;
+    job.chunks = malloc(sizeof(chunk_t) * job.num_chunk);
     
     /* set ptr to the beginning */
     fseek(file,0,SEEK_SET);
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
-        job->chunks[i] = malloc(sizeof(chunk_t));
-        sscanf(buf,"%d %s",&(job->chunks[i].id),hash_buffer);
+        job.chunks[i] = malloc(sizeof(chunk_t));
+        sscanf(buf,"%d %s",&(job.chunks[i].id),hash_buffer);
         
         /* convert ascii to binary hash code */
-        hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job->chunks[i].hash);
+        hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);
         
         memset(read_buffer,0,BUF_SIZE);
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
         i++;
     }    
+    flose(file);
 }
 
 int if_Finished(job_t * job) {
     int i = 0;
-    while(i < job->num_chunk) {
+    while(i < job.num_chunk) {
         if(job[i]->data == NULL)
             return -1;
         i++;
     }
     return 0;
+}
+
+int packet_parser(char* buf) {
+
+    data_packet* data = (data_packet*) buf;
+    /* check magic number */
+    if( data->header->magicnum != 15651)
+        return -1;
+    if( data->header->version != 1)
+        return -1;
+    if( data->header->packet_type < 0 || data->header->packet_type > 5)
+        return -1;
+    
+    return data->header->packet_type;
+
 }
 
 /** Generate WhoHas package
@@ -62,22 +78,22 @@ queue_t *WhoHas_maker() {
     short pkg_len;
     int i, j, n, m;
 
-    if (job->num_chunk > MAX_CHUNK) {
-        n = job->num_chunk / MAX_CHUNK; /* multiple of 74 */
+    if (job.num_chunk > MAX_CHUNK) {
+        n = job.num_chunk / MAX_CHUNK; /* multiple of 74 */
         for (i = 0; i < n; i++) {
             pkg_len = 16 + 4 + MAX_CHUNK * SHA1_HASH_SIZE;
-            data = whohas_data_maker(MAX_CHUNK, job->chunks + i * MAX_CHUNK);
+            data = whohas_data_maker(MAX_CHUNK, job.chunks + i * MAX_CHUNK);
             pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
             enqueue(q, (void *)pkg);
         }
-        m = job->num_chunk - n * MAX_CHUNK; /* number of chunks can fit into one pkg */
+        m = job.num_chunk - n * MAX_CHUNK; /* number of chunks can fit into one pkg */
         pkg_len = 16 + 4 + m * SHA1_HASH_SIZE;
-        data = whohas_data_maker(m, job->chunks + n * MAX_CHUNK);
+        data = whohas_data_maker(m, job.chunks + n * MAX_CHUNK);
         pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
         enqueue(q, (void *)pkg);
     } else {
-        pkg_len = 16 + 4 + job->num_chunk * SHA1_HASH_SIZE;
-        data = whohas_data_maker(job->num_chunk, job->chunks);
+        pkg_len = 16 + 4 + job.num_chunk * SHA1_HASH_SIZE;
+        data = whohas_data_maker(job.num_chunk, job.chunks);
         pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
         enqueue(q, (void *)pkg); 
     }
@@ -162,11 +178,6 @@ data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char 
     return pkg;
 }
 
-void packet_free(data_packet_t *pkg) {
-    free(pkg->data);
-    free(pkg);
-}
-
 
 void Send_WhoHas(data_packet_t* data) {
     
@@ -180,3 +191,23 @@ void Send_WhoHas(data_packet_t* data) {
 void packet_sender(data_packet_t* data, struct sockaddr * to) {
     spiffy_sendto(config->myport, data, sizeof(data_packet_t), 0, to, sizeof(*to));
 }
+
+void packet_free(data_packet_t *pkg) {
+    free(pkg->data);
+    free(pkg);
+}
+
+void freeJob(job_t* job) {
+
+    int i = 0;
+    /* free each chunks */
+    while (i < job.num_chunk) {
+        free((job.chunks[i])->data);
+        free((job.chunks[i])->p);
+        free(job.chunks[i]);
+        i++;
+    }
+    job.chunks = NULL;
+    job.num_chunk = 0;
+}
+

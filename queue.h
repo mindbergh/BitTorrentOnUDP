@@ -18,6 +18,10 @@ typedef struct queue_s {
     int n;
 } queue_t;
 
+queue_t *queue_init(void);
+void enqueue(queue_t* queue, void *data);
+void *dequeue(queue_t* queue);
+void free_queue(queue_t* queue);
 
 
 

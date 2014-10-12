@@ -156,3 +156,10 @@ void peer_run(bt_config_t *config) {
         }
     }
 }
+
+/** Generate WhoHas package
+ *
+ */
+queue_t *WhoHas_maker(char *getchunkfile) {
+    // to do parse getchunkfile 
+}

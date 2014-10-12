@@ -1,8 +1,7 @@
 #include "job.h"
 #include <stdio.h>
 
-int init_job(job_t * job, char* chunkFile)
-{
+int init_job(job_t * job, char* chunkFile) {
     FILE* file = fopen(chunkFile,"r");
     int ch,line_number = 0;
     int i = 0;
@@ -29,8 +28,7 @@ int init_job(job_t * job, char* chunkFile)
     
 }
 
-int if_Finished(job_t * job)
-{
+int if_Finished(job_t * job) {
     int i = 0;
     while(i < job.num_chunk) {
         if(job[i].data == NULL)
@@ -39,3 +37,77 @@ int if_Finished(job_t * job)
     }
     return 0;
 }
+
+/** Generate WhoHas package
+ *
+ */
+queue_t *WhoHas_maker(job_t *job) {
+    // to do parse getchunkfile
+    queue_t *q = queue_init();
+    data_packet_t *pkg;
+    char *data;
+    short pkg_len;
+    int i, j, n, m;
+
+    if (job->num_chunk > MAX_CHUNK) {
+        n = job->num_chunk / MAX_CHUNK; /* multiple of 74 */
+        for (i = 0; i < n; i++) {
+            pkg_len = 16 + 4 + MAX_CHUNK * SHA1_HASH_SIZE;
+            data = whohas_data_maker(MAX_CHUNK, job->chunks + i * MAX_CHUNK);
+            pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
+            enqueue(q, (void *)pkg);
+        }
+        m = job->num_chunk - n * MAX_CHUNK; /* number of chunks can fit into one pkg */
+        pkg_len = 16 + 4 + m * SHA1_HASH_SIZE;
+        data = whohas_data_maker(m, job->chunks + n * MAX_CHUNK);
+        pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
+        enqueue(q, (void *)pkg);
+    } else {
+        pkg_len = 16 + 4 + job->num_chunk * SHA1_HASH_SIZE;
+        data = whohas_data_maker(job->num_chunk, job->chunks);
+        pkg = packet_maker(PKG_WHOHAS, pkg_len, 0, 0, data);
+        enqueue(q, (void *)pkg); 
+    }
+    return q;
+}
+
+char *whohas_data_maker(int num_chunk, chunk_t *chunks) {
+    char *data;
+    short pkg_len;
+    int i;
+    
+    /* Header:16 + num,padding:4 + hashs:20*num of chunk */
+    pkg_len = 16 + 4 + num_chunk * SHA1_HASH_SIZE; 
+    data = (char *)malloc(pkg_len - 16);
+    data[0] = num_chunk; /* Number of chunks */
+    memset(data[1], 0, 3); /* padding 3 bytes */
+    data += 4;             /* shift 4 to fill in chunk hashs */
+    for (i = 0; i < num_chunk; i++) {
+        /* Chunk Hash 20 bytes */
+        memcpy(data[i], chunks[i].hash, SHA1_HASH_SIZE);
+    }
+    return data;
+}
+
+
+
+data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data) {
+    data_packet_t *pkg = (data_packet_t *)malloc(sizeof(data_packet_t));
+    pkg->header.magicnum = 15441; /* Magic number */
+    pkg->header.version = 1;      /* Version number */
+    pkg->header.packet_type = type; /* Packet Type */
+    pkg->header.header_len = 16;    /* Header length is always 16 */
+    pkg->header.packet_len = pkg_len;
+    pkg->header.seq_num = seq;
+    pkg->header.ack_num = ack;
+    pkg->data = data;
+    return pkg;
+}
+
+void packet_free(data_packet_t *pkg) {
+    free(pkg->data);
+    free(pkg);
+}
+
+
+

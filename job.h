@@ -8,5 +8,8 @@ typedef struct job_s {
 
 int init_job(job_t * ob, char* chunkFile);
 int if_Finished(job_t * job);
+void Send_WhoHas(data_packet_t*);
+void packet_sender(data_packet_t* data, struct sockaddr * to);
+
 
 #endif

@@ -150,7 +150,7 @@ void bt_parse_peer_list(bt_config_t *config) {
     node->addr.sin_addr.s_addr = *(in_addr_t *)host->h_addr;
     node->addr.sin_family = AF_INET;
     node->addr.sin_port = htons(port);
-
+    fprintf(stderr, "bt_parse: port:%d\n", port);
     node->next = config->peers;
     config->peers = node;
   }

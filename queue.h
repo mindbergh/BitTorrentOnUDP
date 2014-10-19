@@ -2,14 +2,14 @@
 #define _QUEUE_H
 
 
-
+#include <stdlib.h>
 #include "sha.h"
 #include "bt_parse.h"
 
 
 typedef struct node_s {
 	void *data;
-	struct node_s next;
+	struct node_s* next;
 } node_t;
 
 typedef struct queue_s {

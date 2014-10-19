@@ -23,6 +23,10 @@
 *.hex
 peer
 make-chunks
+client
+server
+test_debug
+test_input_buffer
 
 
 # map

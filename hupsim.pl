@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 use strict;
 
 my $QUEUEMAX = 10;
@@ -217,7 +217,7 @@ sub run($) {
                 $wait = $packTime if ($wait > $packTime);
             } else {
                 $wait = $packTime;
-            }   
+            }
         }
     }
     return $wait;
@@ -360,7 +360,7 @@ sub main() {
     }
     $fh->close();
 
-    $fh = new FileHandle($mapFile) || die ("Can't read $mapFile!"); 
+    $fh = new FileHandle($mapFile) || die ("Can't read $mapFile!");
 #   my @routers = ();
 
     for my $line (<$fh>) {

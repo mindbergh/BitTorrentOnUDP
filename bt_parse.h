@@ -33,6 +33,7 @@ struct bt_config_s {
   int   max_conn;
   short identity;
   unsigned short myport;
+  int sock;
 
   int argc; 
   char **argv;

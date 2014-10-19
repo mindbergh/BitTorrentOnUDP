@@ -2,6 +2,7 @@
  * peer.c
  *
  * Authors: Ming Fang <mingf@andrew.cmu.edu>,
+ *          Yao Zhou <>
  *          
  * Class: 15-441 (Fall 2014)
  *
@@ -21,8 +22,8 @@
 #include "bt_parse.h"
 #include "input_buffer.h"
 #include "queue.h"
-#include "job.h"
-
+#include "job.h"    
+#include "chunk.h"
 
 /* Function Prototypes */
 void peer_run(bt_config_t *config);
@@ -68,40 +69,40 @@ void process_inbound_udp(int sock) {
 
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
-
+    print_pkt((data_packet_t *)buf);
     // call packet_parser
     packet_type = packet_parser(buf);
     // switch on packet type
     switch(packet_type) {
         // case WhoHas
-        case PKG_WHOHAS: {
+        case PKT_WHOHAS: {
             // Construct I have response pkt
             data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
             // Send it back
-            packet_sender(pkt);
+            packet_sender(pkt, (struct sockaddr *) &from);
             packet_free(pkt);
             break;
         }
 
-        case PKG_IHAVE: {
+        case PKT_IHAVE: {
         }
-        case PKG_GET: {
+        case PKT_GET: {
             break;
         }
 
-        case PKG_DATA: {
+        case PKT_DATA: {
             break;
         }
 
-        case PKG_ACK: {
+        case PKT_ACK: {
             break;
         }
         
-        case PKG_DENIED: {
+        case PKT_DENIED: {
             break;
         }
 
-        case default: {
+        default: {
             // Invalid packet
             fprintf(stderr,"Invalid Packet!\n");
             break;
@@ -116,11 +117,10 @@ void process_inbound_udp(int sock) {
 }
 
 void process_get(char *chunkfile, char *outputfile) {
-    int i = 0;
     printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n",
     chunkfile, outputfile);
     /* Create a Job */
-    job_init(job,chunkfile);
+    init_job(chunkfile);
 
     /* call whohasmaker */
     queue_t* whoHasQueue = WhoHas_maker();
@@ -150,7 +150,7 @@ void handle_user_input(char *line, void *cbdata) {
 }
 
 
-void peer_run(bt_config_t *config) {
+void peer_run() {
     int sock;
     struct sockaddr_in myaddr;
     fd_set readfds;
@@ -168,16 +168,17 @@ void peer_run(bt_config_t *config) {
 
     bzero(&myaddr, sizeof(myaddr));
     myaddr.sin_family = AF_INET;
-    myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    myaddr.sin_port = htons(config->myport);
+    //myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    inet_aton("127.0.0.1", (struct in_addr *)&myaddr.sin_addr.s_addr);
+    myaddr.sin_port = htons(config.myport);
 
     if (bind(sock, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {
         perror("peer_run could not bind socket");
         exit(-1);
     }
-
-    spiffy_init(config->identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
-
+    
+    spiffy_init(config.identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
+    config.sock = sock;
     /* load my local chunk file list */
     init_hasChunk(config.has_chunk_file);
 
@@ -210,16 +211,16 @@ void init_hasChunk(char* has_chunk_file) {
     hasChunk = queue_init();
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
-        chunks_t* chunk = malloc(sizeof(chunk_t));
-        sscanf(buf,"%d %s",&(chunk->id),hash_buffer);
+        chunk_t* chunk = malloc(sizeof(chunk_t));
+        sscanf(read_buffer,"%d %s",&(chunk->id),hash_buffer);
         
         /* convert ascii to binary hash code */
         hex2binary(hash_buffer,SHA1_HASH_SIZE*2,chunk->hash);
-        enqueue(hasChunk,chunk);
+        enqueue(hasChunk, (void *)chunk);
 
         memset(read_buffer,0,BUF_SIZE);
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
     } 
-    flose(file);  
+    fclose(file);  
 
 }

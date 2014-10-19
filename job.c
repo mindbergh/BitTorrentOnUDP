@@ -1,13 +1,10 @@
 #include "job.h"
-#include "chunk.h"
-#include "sha.h"
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <stdio.h>
+
 
 
 extern bt_config_t config;
 extern job_t job;
+extern queue_t* hasChunk;
 
 /** @brief Initilize a job
  *  @param The address of the file which contains chunk id and hash code
@@ -19,7 +16,7 @@ int init_job(char* chunkFile) {
     if( file == NULL)
         return -1; // fail to open job file
 
-    int ch,line_number = 0;
+    int line_number = 0;
     int i = 0;
     char read_buffer[BUF_SIZE];
     char hash_buffer[SHA1_HASH_SIZE*2];
@@ -31,13 +28,14 @@ int init_job(char* chunkFile) {
     memset(read_buffer,0,BUF_SIZE);
     
     job.num_chunk = line_number;
+    job.num_need = line_number;
     job.chunks = malloc(sizeof(chunk_t) * job.num_chunk);
     
     /* set ptr to the beginning */
     fseek(file,0,SEEK_SET);
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
-        sscanf(buf,"%d %s",&(job.chunks[i].id),hash_buffer);
+        sscanf(read_buffer,"%d %s",&(job.chunks[i].id),hash_buffer);
         
         /* convert ascii to binary hash code */
         hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);        
@@ -45,37 +43,31 @@ int init_job(char* chunkFile) {
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
         job.chunks[i].pvd = NULL;
         job.chunks[i].num_p = 0;
-
+        job.chunks[i].data = NULL;
         i++;
     }    
-    flose(file);
+    fclose(file);
     // successfully initilize job
     return 0;
 }
 
-r
-int if_Finished(job_t * job) {
-    int i = 0;
-    while(i < job.num_chunk) {
-        if(job[i]->data == NULL)
-            return -1;
-        i++;
-    }
-    return 0;
+int isFinished() {
+    return job.num_need == 0;    
 }
 
 int packet_parser(char* buf) {
 
-    data_packet_t* data = (data_packet_t*) buf;
+    data_packet_t* pkt = (data_packet_t*) buf;
+    header_t *hdr = &pkt->header;
     /* check magic number */
-    if( data->header->magicnum != 15651)
+    if(hdr->magicnum != 15651)
         return -1;
-    if( data->header->version != 1)
+    if(hdr->version != 1)
         return -1;
-    if( data->header->packet_type < 0 || data->header->packet_type > 5)
+    if(hdr->packet_type < 0 || hdr->packet_type > 5)
         return -1;
     
-    return data->header->packet_type;
+    return hdr->packet_type;
 
 }
 
@@ -89,7 +81,9 @@ queue_t *WhoHas_maker() {
     data_packet_t *pkt;
     char data[DATALEN];
     short pkt_len;
-    int i, j, n, m;
+    int i;  // loop index
+    int n;  /* multiple of 74 */
+    int m;  /* number of chunks can fit into one pkt */
 
     if (0 == job.num_chunk) {
         free_queue(q);
@@ -98,7 +92,7 @@ queue_t *WhoHas_maker() {
         n = job.num_chunk / MAX_CHUNK; /* multiple of 74 */
         for (i = 0; i < n; i++) {
             pkt_len = HEADERLEN + 4 + MAX_CHUNK * SHA1_HASH_SIZE;
-            data = whohas_data_maker(MAX_CHUNK, job.chunks + i * MAX_CHUNK);
+            whohas_data_maker(MAX_CHUNK, job.chunks + i * MAX_CHUNK, data);
             pkt = packet_maker(PKT_WHOHAS, pkt_len, 0, 0, data);
             enqueue(q, (void *)pkt);
         }
@@ -123,20 +117,23 @@ queue_t *WhoHas_maker() {
  *  @return void
  */
 void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data) {
-    char *data;
     char *ptr;
     short pkt_len;
+    int num_need = 0;  // the number of chunk needs download
     int i;
     
     /* Header:16 + num,padding:4 + hashs:20*num of chunk */
-    pkt_len = HEADERLEN + 4 + num_chunk * SHA1_HASH_SIZE;
-    data[0] = num_chunk; /* Number of chunks */
-    memset(data[1], 0, 3); /* padding 3 bytes */
+    pkt_len = HEADERLEN + 4 + num_chunk * SHA1_HASH_SIZE;    
+    memset(data, 0, 4); /* padding 3 bytes */
     ptr = data + 4;        /* shift 4 to fill in chunk hashs */
     for (i = 0; i < num_chunk; i++) {
         /* Chunk Hash 20 bytes */
+        if (chunks[i].data != NULL) // I have this chunk already
+            continue;
+        num_need++;
         memcpy(ptr + i * SHA1_HASH_SIZE, chunks[i].hash, SHA1_HASH_SIZE);
     }
+    data[0] = num_need; /* Number of chunks */
 }
 
 /** @brief Generate IHave data part
@@ -153,18 +150,19 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
     int have_num = 0;   // the num of chk I have 
     int i;
     char rawdata[PACKETLEN];
-    char *hash_start;
+    uint8_t *hash_start;
     data_packet_t *pkt;
 
     assert(whohas_pkt->header.packet_type == PKT_WHOHAS);
 
     req_num = whohas_pkt->data[0];
-    hash_start = &whohas_pkt->data[4];
+    hash_start = (uint8_t *)(whohas_pkt->data + 4);
     for (i = 0; i < req_num; i++) {
         if (IfIHave(hash_start)) {
-            data_length += SHA1_HASH_SIZE;
+            
             have_num++;
-            memcpy(rawdata+n, hash_start, SHA1_HASH_SIZE);
+            memcpy(rawdata+data_length, hash_start, SHA1_HASH_SIZE);
+            data_length += SHA1_HASH_SIZE;
         }
         hash_start += SHA1_HASH_SIZE;
     }
@@ -186,15 +184,15 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
 int IfIHave(uint8_t *hash_start) {
     int i;
     node_t *node;
-    if (hasChunk.n == 0)
+    if (hasChunk->n == 0)
         return 0;
-    node = hashChunk.head;
-    for (i = 0; i < hasChunk.n; i++) {
-        if (memcmp(hash_start, node->data, SHA1_HASH_SIZE) {
+    node = hasChunk->head;
+    for (i = 0; i < hasChunk->n; i++) {
+        if (memcmp(hash_start, node->data, SHA1_HASH_SIZE)) {
             node = node->next;
             continue;
         }                
-        return 1
+        return 1;
     }
     return 0;
 }
@@ -206,10 +204,10 @@ int IfIHave(uint8_t *hash_start) {
  *  @return NULL I dont need to send GET this provider.
  *          a queue of GET pkt
  */
-queue_t* GET_maker(data_packet_t *pkt, bt_peer_t* provider) {
-    assert(whohas_pkt->header.packet_type == PKT_IHAVE);
-    int num = pkt->data[0]; // num of chunk that peer has
-    int num_match = 0;
+queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider) {
+    assert(ihave_pkt->header.packet_type == PKT_IHAVE);
+    int num = ihave_pkt->data[0]; // num of chunk that peer has
+    //int num_match = 0;
     int i;
     int match_id;
     chunk_t* chk = job.chunks;  // the needed chunk here
@@ -220,13 +218,13 @@ queue_t* GET_maker(data_packet_t *pkt, bt_peer_t* provider) {
         return NULL;
 
     q = queue_init();
-    hash = pkt->data[4]; // the start of hash
+    hash = (uint8_t *)(ihave_pkt->data + 4); // the start of hash
     for (i = 0; i < num; i++) {
         match_id = match_need(hash);
         if (-1 != match_id) {
             chk[i].pvd = provider;
             chk[i].num_p = 1;
-            pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, hash);
+            pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
         }
         hash += SHA1_HASH_SIZE;
@@ -244,11 +242,11 @@ int match_need(uint8_t *hash) {
     int i;
     chunk_t* chk = job.chunks;
     if (0 == job.num_chunk)
-        return NULL;
+        return -1;
     for (i = 0; i < job.num_chunk; i++) {
         if (NULL != chk[i].pvd)
             continue;
-        if (memcmp(hash, chk[i].hash, SHA1_HASH_SIZE) {
+        if (memcmp(hash, chk[i].hash, SHA1_HASH_SIZE)) {
             continue;
         } else return i;        
     }
@@ -282,18 +280,27 @@ data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char 
  *  @return void
  */
 void Send_WhoHas(data_packet_t* pkt) {
-    
-    bt_peer_s* peer = config.peers;
+    char str[20];
+    struct bt_peer_s* peer = config.peers;
     while(peer != NULL) {
-        packet_sender(pkt,(struct sockaddr *)peer->addr);
-        peer = peer.next;
+
+        fprintf(stderr, "ID:%d\n", peer->id);
+        fprintf(stderr, "Port:%d\n", ntohs(peer->addr.sin_port));
+        inet_ntop(AF_INET, &(peer->addr.sin_addr), str, INET_ADDRSTRLEN);
+        fprintf(stderr, "IP:%s\n", str);
+        if (peer->id != config.identity) {
+            
+            packet_sender(pkt,(struct sockaddr *) &peer->addr);
+        }
+        peer = peer->next;
     }
 }
 
 
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
-    spiffy_sendto(config->myport, pkt, pkt.header.packet_len, 0, to, sizeof(*to));
+    print_pkt(pkt);
+    spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
 }
 
 /** @brief free pkt
@@ -310,10 +317,11 @@ void packet_free(data_packet_t *pkt) {
  *  @return void
  */
 void print_pkt(data_packet_t* pkt) {
-    header_t* hdr = pkt.header;
+    header_t* hdr = &pkt->header;
     uint8_t* hash;
     int num;
     int i;
+    fprintf(stderr, ">>>>>>>>>START<<<<<<<<<<<<<\n");
     fprintf(stderr, "magicnum:\t\t%d\n", hdr->magicnum);
     fprintf(stderr, "version:\t\t%d\n", hdr->version);
     fprintf(stderr, "packet_type:\t\t%d\n", hdr->packet_type);
@@ -321,15 +329,16 @@ void print_pkt(data_packet_t* pkt) {
     fprintf(stderr, "packet_len:\t\t%d\n", hdr->packet_len);
     fprintf(stderr, "seq_num:\t\t%d\n", hdr->seq_num);
     fprintf(stderr, "ack_num:\t\t%d\n", hdr->ack_num);
-    if (PKT_WHOHAS = hdr->packet_type || PKT_IHAVE == hdr->packet_type) {
+    if (PKT_WHOHAS == hdr->packet_type || PKT_IHAVE == hdr->packet_type) {
         num = pkt->data[0];
         fprintf(stderr, "1st bytes data:\t\t%x\n", pkt->data[0]);
-        hash = (uint8_t *)pkt->data[4];
+        hash = (uint8_t *)(pkt->data + 4);
         for (i = 0; i < num; i++) {
             print_hash(hash);
             hash += SHA1_HASH_SIZE;
         }
     }
+    fprintf(stderr, ">>>>>>>>>END<<<<<<<<<<<<<\n");
 }
 
 /** @brief Print out hash
@@ -337,6 +346,7 @@ void print_pkt(data_packet_t* pkt) {
  *  @return void
  */
 void print_hash(uint8_t *hash) {
+    int i;
     for (i = 0; i < SHA1_HASH_SIZE;) {
         fprintf(stderr, "%02x", hash[i++]);
         if (!(i % 4))
@@ -345,16 +355,11 @@ void print_hash(uint8_t *hash) {
     fprintf(stderr, "\n");
 }
 
-void freeJob(job_t* job) {
+void freeJob() {
 
-    int i = 0;
+    
     /* free each chunks */
-    while (i < job.num_chunk) {
-        free((job.chunks[i])->data);
-        free((job.chunks[i])->p);
-        free(job.chunks[i]);
-        i++;
-    }
+    free(job.chunks);
     job.chunks = NULL;
     job.num_chunk = 0;
 }

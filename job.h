@@ -7,9 +7,9 @@
 
 
 
-#define PACKETLEN 		1500
-#define HEADERLEN      16
-#define DATALEN        PACKETLEN - HEADERLEN
+#define PACKETLEN       1500
+#define HEADERLEN       16
+#define DATALEN         PACKETLEN - HEADERLEN
 #define MAX_CHUNK		74
 
 #define PKT_WHOHAS 		0
@@ -53,9 +53,13 @@ int if_Finished(job_t * job);
 void Send_WhoHas(data_packet_t* pkt);
 void packet_sender(data_packet_t* pkt, struct sockaddr * to);
 queue_t *WhoHas_maker(void);
+data_packet_t *IHave_maker(data_packet_t *whohas_pkt);
+queue_t* GET_maker(data_packet_t *pkt, bt_peer_t* provider);
 char *whohas_data_maker(int num_chunk, chunk_t *chunks);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
 void packet_free(data_packet_t *pkg);
+void print_pkt(data_packet_t* pkt);
+void print_hash(uint8_t *hash);
 
 
 #endif

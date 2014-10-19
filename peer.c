@@ -80,12 +80,14 @@ void process_inbound_udp(int sock) {
             queue_t* pkt_queue = WhoHas_maker((data_packet_t*)buf);
             // Send it back
             int index = 0;
-            node_t cur = pkt_queue->head;
-            while(index < pkt_queue->n) {
+            int size = 0;
+            node_t* cur;
+            size = pkt_queue->n;
+            while(index < size) {
+                cur = pkt_queue->head;
                 packet_sender(cur->data);
                 dequeue(pkt_queue);
                 index++;
-                cur = cur->next;
             }
             break;
         }

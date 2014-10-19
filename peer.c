@@ -61,14 +61,13 @@ int main(int argc, char **argv) {
 
 
 void process_inbound_udp(int sock) {
-    #define BUFLEN 1500
     int packet_type = -1;
     struct sockaddr_in from;
     socklen_t fromlen;
-    char buf[BUFLEN];
+    char buf[PACKETLEN];
 
     fromlen = sizeof(from);
-    spiffy_recvfrom(sock, buf, BUFLEN, 0, (struct sockaddr *) &from, &fromlen);
+    spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
 
     // call packet_parser
     packet_type = packet_parser(buf);
@@ -77,28 +76,14 @@ void process_inbound_udp(int sock) {
         // case WhoHas
         case PKG_WHOHAS: {
             // Construct I have response pkt
-            queue_t* pkt_queue = WhoHas_maker((data_packet_t*)buf);
-            // Send it back
-            int index = 0;
-            int size = 0;
-            node_t* cur;
-            size = pkt_queue->n;
-            while(index < size) {
-                cur = pkt_queue->head;
-                packet_sender(cur->data);
-                dequeue(pkt_queue);
-                index++;
-            }
-            break;
-        }
-
-        case PKG_IHAVE: {
-            // Construct I have response pkt
             data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
             // Send it back
             packet_sender(pkt);
             packet_free(pkt);
             break;
+        }
+
+        case PKG_IHAVE: {
         }
         case PKG_GET: {
             break;
@@ -140,18 +125,14 @@ void process_get(char *chunkfile, char *outputfile) {
     /* call whohasmaker */
     queue_t* whoHasQueue = WhoHas_maker();
     /* send out all whohas packets */
-    node_s* tmp = whoHasQueue->head;
-    node_s* last = tmp;
-    while(i < whoHasQueue->n) {
-        last = tmp;
-        Send_WhoHas((char*)tmp->data, &config);
-        tmp = tmp->next;
-        packet_free(last);
-        i++;
+    data_packet_t* cur_pkt = NULL;
+    while((cur_pkt = (data_packet_t *)dequeue(whoHasQueue)) != NULL) {
+        Send_WhoHas(cur_pkt);
+        packet_free(cur_pkt);
     }
     
     /* free current job content */
-    freeJob(job);
+    //freeJob(job);
     
 }
 

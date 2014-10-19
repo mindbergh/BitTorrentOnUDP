@@ -302,16 +302,16 @@ void print_pkt(data_packet_t* pkt) {
     uint8_t* hash;
     int num;
     int i;
-    fprintf(stderr, "magicnum:%d\n", hdr->magicnum);
-    fprintf(stderr, "version:%d\n", hdr->version);
-    fprintf(stderr, "packet_type:%d\n", hdr->packet_type);
-    fprintf(stderr, "header_len:%d\n", hdr->header_len);
-    fprintf(stderr, "packet_len:%d\n", hdr->packet_len);
-    fprintf(stderr, "seq_num:%d\n", hdr->seq_num);
-    fprintf(stderr, "ack_num:%d\n", hdr->ack_num);
-    if (PKT_DATA != hdr->packet_type) {
+    fprintf(stderr, "magicnum:\t\t%d\n", hdr->magicnum);
+    fprintf(stderr, "version:\t\t%d\n", hdr->version);
+    fprintf(stderr, "packet_type:\t\t%d\n", hdr->packet_type);
+    fprintf(stderr, "header_len:\t\t%d\n", hdr->header_len);
+    fprintf(stderr, "packet_len:\t\t%d\n", hdr->packet_len);
+    fprintf(stderr, "seq_num:\t\t%d\n", hdr->seq_num);
+    fprintf(stderr, "ack_num:\t\t%d\n", hdr->ack_num);
+    if (PKT_WHOHAS = hdr->packet_type || PKT_IHAVE == hdr->packet_type) {
         num = pkt->data[0];
-        fprintf(stderr, "1st bytes data:%x\n", pkt->data[0]);
+        fprintf(stderr, "1st bytes data:\t\t%x\n", pkt->data[0]);
         hash = (uint8_t *)pkt->data[4];
         for (i = 0; i < num; i++) {
             print_hash(hash);

@@ -77,16 +77,22 @@ void process_inbound_udp(int sock) {
         // case WhoHas
         case PKG_WHOHAS: {
             // Construct I have response pkt
-            data_packet_t* pkt = WhoHas_maker((data_packet_t*)buf);
+            queue_t* pkt_queue = WhoHas_maker((data_packet_t*)buf);
             // Send it back
-            packet_sender(pkt);
-            packet_free(pkt);
+            int index = 0;
+            node_t cur = pkt_queue->head;
+            while(index < pkt_queue->n) {
+                packet_sender(cur->data);
+                dequeue(pkt_queue);
+                index++;
+                cur = cur->next;
+            }
             break;
         }
 
         case PKG_IHAVE: {
             // Construct I have response pkt
-            data_packet_t* pkt = WhoHas_maker((data_packet_t*)buf);
+            data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
             // Send it back
             packet_sender(pkt);
             packet_free(pkt);

@@ -26,10 +26,10 @@ typedef struct job_s {
 
 typedef struct chunk_s {
 	int id;
-	char hash[SHA1_HASH_SIZE];
+	uint8_t hash[SHA1_HASH_SIZE];
 	char *data;
 	int num_p;
-	bt_peer_t *p; /* providers */
+	bt_peer_t *pvd; /* providers */
 } chunk_t;
  
 

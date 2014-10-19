@@ -171,14 +171,14 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
  *  @return 1 if I have some of them
  *          0 if I dont have any one
  */
-int IfIHave(char *hash_start) {
+int IfIHave(uint8_t *hash_start) {
     int i;
     node_t *node;
     if (hasChunk.n == 0)
         return 0;
     node = hashChunk.head;
     for (i = 0; i < hasChunk.n; i++) {
-        if (memcmp(hash_start, (char *)node->data), SHA1_HASH_SIZE) {
+        if (memcmp(hash_start, node->data, SHA1_HASH_SIZE) {
             node = node->next;
             continue;
         }                
@@ -187,8 +187,60 @@ int IfIHave(char *hash_start) {
     return 0;
 }
 
-data_packet_t* GET_maker(data_packet_t *pkt) {
-    
+
+/** @brief Generate GET pkt
+ *  @param pkt incoming Ihave pkt
+ *  @param provider the incoming peer who send the IHave
+ *  @return NULL I dont need to send GET this provider.
+ *          a queue of GET pkt
+ */
+queue_t* GET_maker(data_packet_t *pkt, bt_peer_t* provider) {
+    assert(whohas_pkt->header.packet_type == PKT_IHAVE);
+    int num = pkt->data[0]; // num of chunk that peer has
+    int num_match = 0;
+    int i;
+    int match_id;
+    chunk_t* chk = job.chunks;  // the needed chunk here
+    queue_t *q;      // the queue of GET request
+    data_packet_t* pkt; // GET packet
+    uint8_t *hash;   // the incoming hash waiting to match my needs
+    if (0 == num)
+        return NULL;
+
+    q = queue_init();
+    hash = pkt->data[4]; // the start of hash
+    for (i = 0; i < num; i++) {
+        match_id = match_need(hash);
+        if (-1 != match_id) {
+            chk[i].pvd = provider;
+            chk[i].num_p = 1;
+            pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, hash);
+            enqueue(q, (void *)pkt);
+        }
+        hash += SHA1_HASH_SIZE;
+    }
+    return q;
+}
+
+
+/** @brief try to match the incoming IHave to what I want
+ *  @param hash the incoming chunk hash to be matched
+ *  @return -1 if I dont need this
+ *          the int id of needed chunk that matches this hash
+ */
+int match_need(uint8_t *hash) {
+    int i;
+    chunk_t* chk = job.chunks;
+    if (0 == job.num_chunk)
+        return NULL;
+    for (i = 0; i < job.num_chunk; i++) {
+        if (NULL != chk[i].pvd)
+            continue;
+        if (memcmp(hash, chk[i].hash, SHA1_HASH_SIZE) {
+            continue;
+        } else return i;        
+    }
+    return -1;
 }
 
 

@@ -53,7 +53,7 @@ int init_job(char* chunkFile) {
     return 0;
 }
 
-
+r
 int if_Finished(job_t * job) {
     int i = 0;
     while(i < job.num_chunk) {

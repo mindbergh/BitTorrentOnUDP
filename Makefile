@@ -43,3 +43,6 @@ test_debug.o: debug.c debug-text.h
 	${CC} debug.c ${INCLUDES} ${CFLAGS} -c -D_TEST_DEBUG_ -o $@
 
 test_input_buffer:  test_input_buffer.o input_buffer.o
+
+handin:
+	(make clean; cd ..; tar cvf handin.tar 15-441-project-2 --exclude='tmp' --exclude='example')

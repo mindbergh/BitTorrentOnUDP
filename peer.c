@@ -76,13 +76,20 @@ void process_inbound_udp(int sock) {
     switch(packet_type) {
         // case WhoHas
         case PKG_WHOHAS: {
-            // call Ihave maker
-            // call packet sender
+            // Construct I have response pkt
+            data_packet_t* pkt = WhoHas_maker((data_packet_t*)buf);
+            // Send it back
+            packet_sender(pkt);
+            packet_free(pkt);
             break;
         }
 
         case PKG_IHAVE: {
-            // call GET maker
+            // Construct I have response pkt
+            data_packet_t* pkt = WhoHas_maker((data_packet_t*)buf);
+            // Send it back
+            packet_sender(pkt);
+            packet_free(pkt);
             break;
         }
         case PKG_GET: {

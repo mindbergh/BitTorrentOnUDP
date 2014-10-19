@@ -167,6 +167,7 @@ void bt_dump_config(bt_config_t *config) {
   printf("max-conn:       %d\n", config->max_conn);
   printf("peer-identity:  %d\n", config->identity);
   printf("peer-list-file: %s\n", config->peer_list_file);
+  printf("my sock: %d\n", config->sock);
   
   for (p = config->peers; p; p = p->next) 
     printf("  peer %d: %s:%d\n", p->id, inet_ntoa(p->addr.sin_addr), ntohs(p->addr.sin_port));

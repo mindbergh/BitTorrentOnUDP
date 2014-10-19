@@ -60,7 +60,7 @@ int packet_parser(char* buf) {
     data_packet_t* pkt = (data_packet_t*) buf;
     header_t *hdr = &pkt->header;
     /* check magic number */
-    if(hdr->magicnum != 15651)
+    if(hdr->magicnum != 15441)
         return -1;
     if(hdr->version != 1)
         return -1;
@@ -282,14 +282,14 @@ data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char 
 void Send_WhoHas(data_packet_t* pkt) {
     char str[20];
     struct bt_peer_s* peer = config.peers;
-    while(peer != NULL) {
 
+    //bt_dump_config(&config);
+    while(peer != NULL) {
         fprintf(stderr, "ID:%d\n", peer->id);
         fprintf(stderr, "Port:%d\n", ntohs(peer->addr.sin_port));
         inet_ntop(AF_INET, &(peer->addr.sin_addr), str, INET_ADDRSTRLEN);
         fprintf(stderr, "IP:%s\n", str);
         if (peer->id != config.identity) {
-            
             packet_sender(pkt,(struct sockaddr *) &peer->addr);
         }
         peer = peer->next;

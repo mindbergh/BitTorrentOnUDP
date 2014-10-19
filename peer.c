@@ -104,7 +104,7 @@ void process_inbound_udp(int sock) {
 
         default: {
             // Invalid packet
-            fprintf(stderr,"Invalid Packet!\n");
+            fprintf(stderr,"Invalid Packet:%d!\n", packet_type);
             break;
         }
     }
@@ -127,6 +127,7 @@ void process_get(char *chunkfile, char *outputfile) {
     /* send out all whohas packets */
     data_packet_t* cur_pkt = NULL;
     while((cur_pkt = (data_packet_t *)dequeue(whoHasQueue)) != NULL) {
+        //fprintf(stderr, "here\n");
         Send_WhoHas(cur_pkt);
         packet_free(cur_pkt);
     }
@@ -176,7 +177,7 @@ void peer_run() {
         perror("peer_run could not bind socket");
         exit(-1);
     }
-    
+
     spiffy_init(config.identity, (struct sockaddr *)&myaddr, sizeof(myaddr));
     config.sock = sock;
     /* load my local chunk file list */

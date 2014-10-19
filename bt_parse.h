@@ -34,10 +34,8 @@ struct bt_config_s {
   short identity;
   unsigned short myport;
   int sock;
-
   int argc; 
   char **argv;
-
   bt_peer_t *peers;
 };
 typedef struct bt_config_s bt_config_t;

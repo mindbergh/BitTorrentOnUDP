@@ -158,8 +158,7 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
     req_num = whohas_pkt->data[0];
     hash_start = (uint8_t *)(whohas_pkt->data + 4);
     for (i = 0; i < req_num; i++) {
-        if (IfIHave(hash_start)) {
-            
+        if (IfIHave(hash_start)) {            
             have_num++;
             memcpy(rawdata+data_length, hash_start, SHA1_HASH_SIZE);
             data_length += SHA1_HASH_SIZE;
@@ -184,11 +183,14 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
 int IfIHave(uint8_t *hash_start) {
     int i;
     node_t *node;
+    chunk_t* this_chunk;
     if (hasChunk->n == 0)
         return 0;
     node = hasChunk->head;
     for (i = 0; i < hasChunk->n; i++) {
-        if (memcmp(hash_start, node->data, SHA1_HASH_SIZE)) {
+        //print_hash((uint8_t *)node->data);
+        this_chunk = (chunk_t *)node->data;
+        if (memcmp(hash_start, this_chunk->hash, SHA1_HASH_SIZE)) {
             node = node->next;
             continue;
         }                

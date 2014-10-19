@@ -217,6 +217,8 @@ void init_hasChunk(char* has_chunk_file) {
         
         /* convert ascii to binary hash code */
         hex2binary(hash_buffer,SHA1_HASH_SIZE*2,chunk->hash);
+        //fprintf(stderr, "ID: %d\n", chunk->id);
+        //print_hash((uint8_t *)chunk->hash);
         enqueue(hasChunk, (void *)chunk);
 
         memset(read_buffer,0,BUF_SIZE);

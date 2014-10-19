@@ -9,8 +9,16 @@
 extern bt_config_t config;
 extern job_t job;
 
+/** @brief Initilize a job
+ *  @param The address of the file which contains chunk id and hash code
+ *  @return 0 if job initilization is successed
+ *          1 if failed
+ */
 int init_job(char* chunkFile) {
     FILE* file = fopen(chunkFile,"r");
+    if( file == NULL)
+        return -1; // fail to open job file
+
     int ch,line_number = 0;
     int i = 0;
     char read_buffer[BUF_SIZE];
@@ -29,18 +37,22 @@ int init_job(char* chunkFile) {
     fseek(file,0,SEEK_SET);
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
-        job.chunks[i] = malloc(sizeof(chunk_t));
         sscanf(buf,"%d %s",&(job.chunks[i].id),hash_buffer);
         
         /* convert ascii to binary hash code */
-        hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);
-        
+        hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);        
         memset(read_buffer,0,BUF_SIZE);
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
+        job.chunks[i].pvd = NULL;
+        job.chunks[i].num_p = 0;
+
         i++;
     }    
     flose(file);
+    // successfully initilize job
+    return 0;
 }
+
 
 int if_Finished(job_t * job) {
     int i = 0;
@@ -54,7 +66,7 @@ int if_Finished(job_t * job) {
 
 int packet_parser(char* buf) {
 
-    data_packet* data = (data_packet*) buf;
+    data_packet_t* data = (data_packet_t*) buf;
     /* check magic number */
     if( data->header->magicnum != 15651)
         return -1;

@@ -303,7 +303,6 @@ void Send_WhoHas(data_packet_t* pkt) {
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
     hostToNet(pkt);
-    htons(pkt->header.magicnum);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);
 }
@@ -325,11 +324,11 @@ void hostToNet(data_packet_t* pkt) {
  *  @return void
  */
 void netToHost(data_packet_t* pkt){
-    ntohs(pkt->header.magicnum);
-    ntohs(pkt->header.header_len);
-    ntohs(pkt->header.packet_len);
-    ntohl(pkt->header.seq_num);
-    ntohl(pkt->header.ack_num);
+    pkt->header.magicnum ＝ ntohs(pkt->header.magicnum);
+    pkt->header.header_len ＝ ntohs(pkt->header.header_len);
+    pkt->header.packet_len ＝ ntohs(pkt->header.packet_len);
+    pkt->header.seq_num ＝ ntohl(pkt->header.seq_num);
+    pkt->header.ack_num ＝ ntohl(pkt->header.ack_num);
 }
 
 /** @brief free pkt

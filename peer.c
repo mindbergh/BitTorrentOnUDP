@@ -35,6 +35,8 @@ job_t job;
 bt_config_t config;
 queue_t* hasChunk;
 
+uint32_t some_long = 10;
+uint32_t some_short = 20;
 
 int main(int argc, char **argv) {
 
@@ -189,10 +191,12 @@ void peer_run() {
         nfds = select(sock+1, &readfds, NULL, NULL, NULL);
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
+                ntohs((short)sock);
                 process_inbound_udp(sock);
             }
 
             if (FD_ISSET(STDIN_FILENO, &readfds)) {
+                ntohs((short)sock);
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");
             }

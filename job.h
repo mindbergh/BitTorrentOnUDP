@@ -27,8 +27,7 @@
 #define PKT_GET			2
 #define PKT_DATA		3
 #define PKT_ACK 		4
-#define PKT_DENIED		5
-
+#define PKT_DENIED		5      
 
 
 typedef struct chunk_s {

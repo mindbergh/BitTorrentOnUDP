@@ -1,5 +1,5 @@
 #include "job.h"
-
+#include <netinet/in.h>
 
 
 extern bt_config_t config;
@@ -266,13 +266,13 @@ int match_need(uint8_t *hash) {
  */
 data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char *data) {
     data_packet_t *pkt = (data_packet_t *)malloc(sizeof(data_packet_t));
-    pkt->header.magicnum = htons(15441); /* Magic number */
+    pkt->header.magicnum = 15441; /* Magic number */
     pkt->header.version = 1;      /* Version number */
     pkt->header.packet_type = type; /* Packet Type */
-    pkt->header.header_len = htons(HEADERLEN);    /* Header length is always 16 */
-    pkt->header.packet_len = htons(pkt_len);
-    pkt->header.seq_num = htonl(seq);
-    pkt->header.ack_num = htonl(ack);
+    pkt->header.header_len = HEADERLEN;    /* Header length is always 16 */
+    pkt->header.packet_len = pkt_len;
+    pkt->header.seq_num = seq;
+    pkt->header.ack_num = ack;
     memcpy(pkt->data, data, pkt_len - HEADERLEN);
     return pkt;
 }
@@ -302,7 +302,34 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     print_pkt(pkt);
-    spiffy_sendto(config.sock, pkt, ntohs(pkt->header.packet_len), 0, to, sizeof(*to));
+    int pkt_size = pkt->header.packet_len;
+    hostToNet(pkt);
+    spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
+    netToHost(pkt);
+}
+
+/** @brief Convert data from local format to network format
+ *  @param pkt pkt to be send
+ *  @return void
+ */
+void hostToNet(data_packet_t* pkt) {
+    pkt->header.magicnum = htons(pkt->header.magicnum);
+    pkt->header.header_len = htons(pkt->header.header_len);
+    pkt->header.packet_len = htons(pkt->header.packet_len);
+    pkt->header.seq_num = htonl(pkt->header.seq_num);
+    pkt->header.ack_num = htonl(pkt->header.ack_num);
+}
+
+/** @brief Convert data from network format to local format
+ *  @param pkt pkt to be send
+ *  @return void
+ */
+void netToHost(data_packet_t* pkt) {
+    pkt->header.magicnum = ntohs(pkt->header.magicnum);
+    pkt->header.header_len = ntohs(pkt->header.header_len);
+    pkt->header.packet_len = ntohs(pkt->header.packet_len);
+    pkt->header.seq_num = ntohs(pkt->header.seq_num);
+    pkt->header.ack_num = ntohs(pkt->header.ack_num);
 }
 
 /** @brief free pkt
@@ -324,13 +351,13 @@ void print_pkt(data_packet_t* pkt) {
     int num;
     int i;
     fprintf(stderr, ">>>>>>>>>START<<<<<<<<<<<<<\n");
-    fprintf(stderr, "magicnum:\t\t%d\n", ntohs(hdr->magicnum));
+    fprintf(stderr, "magicnum:\t\t%d\n", hdr->magicnum);
     fprintf(stderr, "version:\t\t%d\n", hdr->version);
     fprintf(stderr, "packet_type:\t\t%d\n", hdr->packet_type);
-    fprintf(stderr, "header_len:\t\t%d\n", ntohs(hdr->header_len));
-    fprintf(stderr, "packet_len:\t\t%d\n", ntohs(hdr->packet_len));
-    fprintf(stderr, "seq_num:\t\t%d\n", ntohl(hdr->seq_num));
-    fprintf(stderr, "ack_num:\t\t%d\n", ntohl(hdr->ack_num));
+    fprintf(stderr, "header_len:\t\t%d\n", hdr->header_len);
+    fprintf(stderr, "packet_len:\t\t%d\n", hdr->packet_len);
+    fprintf(stderr, "seq_num:\t\t%d\n", hdr->seq_num);
+    fprintf(stderr, "ack_num:\t\t%d\n", hdr->ack_num);
     if (PKT_WHOHAS == hdr->packet_type || PKT_IHAVE == hdr->packet_type) {
         num = pkt->data[0];
         fprintf(stderr, "1st bytes data:\t\t%x\n", pkt->data[0]);

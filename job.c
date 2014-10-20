@@ -1,5 +1,5 @@
 #include "job.h"
-
+#include <netinet/in.h>
 
 
 extern bt_config_t config;
@@ -301,9 +301,10 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
-    print_pkt(pkt);
+    int pkt_size = pkt->header.packet_len;
     hostToNet(pkt);
-    spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
+    htons(pkt->header.magicnum);
+    spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);
 }
 
@@ -312,11 +313,11 @@ void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
  *  @return void
  */
 void hostToNet(data_packet_t* pkt) {
-    htons(pkt->header.magicnum);
-    htons(pkt->header.header_len);
-    htons(pkt->header.packet_len);
-    htonl(pkt->header.seq_num);
-    htonl(pkt->header.ack_num);
+    pkt->header.magicnum = htons(pkt->header.magicnum);
+    pkt->header.header_len =htons(pkt->header.header_len);
+    pkt->header.packet_len = htons(pkt->header.packet_len);
+    pkt->header.seq_num = htonl(pkt->header.seq_num);
+    pkt->header.ack_num = htonl(pkt->header.ack_num);
 }
 
 /** @brief Convert data from network format to local format

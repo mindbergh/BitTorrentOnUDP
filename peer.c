@@ -35,6 +35,8 @@ job_t job;
 bt_config_t config;
 queue_t* hasChunk;
 
+uint32_t some_long = 10;
+uint32_t some_short = 20;
 
 int main(int argc, char **argv) {
 
@@ -66,12 +68,17 @@ void process_inbound_udp(int sock) {
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
-
+    
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
+    // change to local format
+    netToHost((data_packet_t*)buf);
+    
     print_pkt((data_packet_t *)buf);
     // call packet_parser
     packet_type = packet_parser(buf);
+    fprintf(stderr, "buffer:%s\n", (char*)buf);
+
     // switch on packet type
     switch(packet_type) {
         // case WhoHas
@@ -189,7 +196,7 @@ void peer_run() {
         nfds = select(sock+1, &readfds, NULL, NULL, NULL);
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
-                process_inbound_udp(sock);
+                 process_inbound_udp(sock);
             }
 
             if (FD_ISSET(STDIN_FILENO, &readfds)) {

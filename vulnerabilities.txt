@@ -1,0 +1,24 @@
+################################################################################
+# Vulnerabilities                                                              #
+#                                                                              #
+# Description: This file describes the vulnerabilities for each stage.         #
+#                                                                              #
+# Authors: Ming Fang <mingf@cs.cmu.edu>, Yao Zhou <yaozhou@cs.cmu.edu>         #
+#                                                                              #
+#                                                                              #
+################################################################################
+
+
+
+[TOC-1] Table of Contents
+--------------------------------------------------------------------------------
+
+        [TOC-1] Table of Contents
+        [CKP-1] Description of Vulnerabilities for Checkpoint 1
+
+[CKP-1] Description of Vulnerabilities for Checkpoint 1
+--------------------------------------------------------------------------------
+1. 
+Currently, we have not implemented timeout and retransmission. If the responsing
+IHAVE packet were somewhat dropped, the sender would not reflood WHOHAS packets.
+This may result in some downloading jobs cannot be successfully completed.

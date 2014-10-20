@@ -60,7 +60,7 @@ int packet_parser(char* buf) {
     data_packet_t* pkt = (data_packet_t*) buf;
     header_t *hdr = &pkt->header;
     /* check magic number */
-    if(hdr->magicnum != 15441)
+    if(ntohs(hdr->magicnum) != 15441)
         return -1;
     if(hdr->version != 1)
         return -1;
@@ -266,13 +266,13 @@ int match_need(uint8_t *hash) {
  */
 data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char *data) {
     data_packet_t *pkt = (data_packet_t *)malloc(sizeof(data_packet_t));
-    pkt->header.magicnum = 15441; /* Magic number */
+    pkt->header.magicnum = htons(15441); /* Magic number */
     pkt->header.version = 1;      /* Version number */
     pkt->header.packet_type = type; /* Packet Type */
-    pkt->header.header_len = HEADERLEN;    /* Header length is always 16 */
-    pkt->header.packet_len = pkt_len;
-    pkt->header.seq_num = seq;
-    pkt->header.ack_num = ack;
+    pkt->header.header_len = htons(HEADERLEN);    /* Header length is always 16 */
+    pkt->header.packet_len = htons(pkt_len);
+    pkt->header.seq_num = htonl(seq);
+    pkt->header.ack_num = htonl(ack);
     memcpy(pkt->data, data, pkt_len - HEADERLEN);
     return pkt;
 }
@@ -302,7 +302,7 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     print_pkt(pkt);
-    spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
+    spiffy_sendto(config.sock, pkt, ntohs(pkt->header.packet_len), 0, to, sizeof(*to));
 }
 
 /** @brief free pkt
@@ -324,13 +324,13 @@ void print_pkt(data_packet_t* pkt) {
     int num;
     int i;
     fprintf(stderr, ">>>>>>>>>START<<<<<<<<<<<<<\n");
-    fprintf(stderr, "magicnum:\t\t%d\n", hdr->magicnum);
+    fprintf(stderr, "magicnum:\t\t%d\n", ntohs(hdr->magicnum));
     fprintf(stderr, "version:\t\t%d\n", hdr->version);
     fprintf(stderr, "packet_type:\t\t%d\n", hdr->packet_type);
-    fprintf(stderr, "header_len:\t\t%d\n", hdr->header_len);
-    fprintf(stderr, "packet_len:\t\t%d\n", hdr->packet_len);
-    fprintf(stderr, "seq_num:\t\t%d\n", hdr->seq_num);
-    fprintf(stderr, "ack_num:\t\t%d\n", hdr->ack_num);
+    fprintf(stderr, "header_len:\t\t%d\n", ntohs(hdr->header_len));
+    fprintf(stderr, "packet_len:\t\t%d\n", ntohs(hdr->packet_len));
+    fprintf(stderr, "seq_num:\t\t%d\n", ntohl(hdr->seq_num));
+    fprintf(stderr, "ack_num:\t\t%d\n", ntohl(hdr->ack_num));
     if (PKT_WHOHAS == hdr->packet_type || PKT_IHAVE == hdr->packet_type) {
         num = pkt->data[0];
         fprintf(stderr, "1st bytes data:\t\t%x\n", pkt->data[0]);

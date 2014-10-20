@@ -302,7 +302,11 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     print_pkt(pkt);
-    htons((short)config.sock);
+    htons(pkt->header.magicnum);
+    htons(pkt->header.header_len);
+    htons(pkt->header.packet_len);
+    htonl(pkt->header.seq_num);
+    htonl(pkt->header.ack_num);
     spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
 }
 

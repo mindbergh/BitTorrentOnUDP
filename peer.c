@@ -191,12 +191,10 @@ void peer_run() {
         nfds = select(sock+1, &readfds, NULL, NULL, NULL);
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
-                ntohs((short)sock);
-                process_inbound_udp(sock);
+                 process_inbound_udp(sock);
             }
 
             if (FD_ISSET(STDIN_FILENO, &readfds)) {
-                ntohs((short)sock);
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");
             }

@@ -68,13 +68,16 @@ void process_inbound_udp(int sock) {
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
-
+    // change to local format
+    netToHost((data_packet_t*)buf);
+    
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
     print_pkt((data_packet_t *)buf);
     // call packet_parser
     packet_type = packet_parser(buf);
     fprintf(stderr, "buffer:%s\n", (char*)buf);
+
     // switch on packet type
     switch(packet_type) {
         // case WhoHas

@@ -323,12 +323,12 @@ void hostToNet(data_packet_t* pkt) {
  *  @param pkt pkt to be send
  *  @return void
  */
-void netToHost(data_packet_t* pkt){
-    pkt->header.magicnum ＝ ntohs(pkt->header.magicnum);
-    pkt->header.header_len ＝ ntohs(pkt->header.header_len);
-    pkt->header.packet_len ＝ ntohs(pkt->header.packet_len);
-    pkt->header.seq_num ＝ ntohl(pkt->header.seq_num);
-    pkt->header.ack_num ＝ ntohl(pkt->header.ack_num);
+void netToHost(data_packet_t* pkt) {
+    pkt->header.magicnum = ntohs(pkt->header.magicnum);
+    pkt->header.header_len =ntohs(pkt->header.header_len);
+    pkt->header.packet_len = ntohs(pkt->header.packet_len);
+    pkt->header.seq_num = ntohs(pkt->header.seq_num);
+    pkt->header.ack_num = ntohs(pkt->header.ack_num);
 }
 
 /** @brief free pkt

@@ -302,12 +302,33 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     print_pkt(pkt);
+    hostToNet(pkt);
+    spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
+    netToHost(pkt);
+}
+
+/** @brief Convert data from local format to network format
+ *  @param pkt pkt to be send
+ *  @return void
+ */
+void hostToNet(data_packet_t* pkt) {
     htons(pkt->header.magicnum);
     htons(pkt->header.header_len);
     htons(pkt->header.packet_len);
     htonl(pkt->header.seq_num);
     htonl(pkt->header.ack_num);
-    spiffy_sendto(config.sock, pkt, pkt->header.packet_len, 0, to, sizeof(*to));
+}
+
+/** @brief Convert data from network format to local format
+ *  @param pkt pkt to be send
+ *  @return void
+ */
+void netToHost(data_packet_t* pkt){
+    ntohs(pkt->header.magicnum);
+    ntohs(pkt->header.header_len);
+    ntohs(pkt->header.packet_len);
+    ntohl(pkt->header.seq_num);
+    ntohl(pkt->header.ack_num);
 }
 
 /** @brief free pkt

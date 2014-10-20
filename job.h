@@ -74,6 +74,7 @@ data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char 
 void packet_free(data_packet_t *pkg);
 void print_pkt(data_packet_t* pkt);
 void print_hash(uint8_t *hash);
-
+void hostToNet(data_packet_t* pkt);
+void netToHost(data_packet_t* pkt);
 
 #endif

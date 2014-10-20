@@ -74,6 +74,7 @@ void process_inbound_udp(int sock) {
     print_pkt((data_packet_t *)buf);
     // call packet_parser
     packet_type = packet_parser(buf);
+    fprintf(stderr, "buffer:%s\n", (char*)buf);
     // switch on packet type
     switch(packet_type) {
         // case WhoHas

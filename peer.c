@@ -110,10 +110,9 @@ void process_inbound_udp(int sock) {
     }
 
     printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
-           "Incoming message from %s:%d\n%s\n\n",
+           "Incoming message from %s:%d\n\n",
             inet_ntoa(from.sin_addr),
-            ntohs(from.sin_port),
-            buf);
+            ntohs(from.sin_port));
 }
 
 void process_get(char *chunkfile, char *outputfile) {

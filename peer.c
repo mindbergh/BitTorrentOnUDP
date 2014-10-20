@@ -26,7 +26,7 @@
 #include "chunk.h"
 
 /* Function Prototypes */
-void peer_run(bt_config_t *config);
+void peer_run();
 void freeJob(job_t* job);
 void init_hasChunk(char* has_chunk_file);
 
@@ -186,9 +186,7 @@ void peer_run() {
         int nfds;
         FD_SET(STDIN_FILENO, &readfds);
         FD_SET(sock, &readfds);
-
         nfds = select(sock+1, &readfds, NULL, NULL, NULL);
-
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
                 process_inbound_udp(sock);

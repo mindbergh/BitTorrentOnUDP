@@ -92,7 +92,7 @@ void process_inbound_udp(int sock) {
             fprintf(stderr,"get here!\n");
             // Construct Get Pkt response 
             queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf);
-            /* send out all GET packets */
+            // send out first GET packets 
             data_packet_t* cur_pkt = NULL;
             while((cur_pkt = (data_packet_t *)dequeue(get_Pkt_Queue)) != NULL) {
                 //fprintf(stderr, "here\n");

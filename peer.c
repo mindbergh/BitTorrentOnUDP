@@ -73,12 +73,9 @@ void process_inbound_udp(int sock) {
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
     // change to local format
     netToHost((data_packet_t*)buf);
-    
-    print_pkt((data_packet_t *)buf);
     // call packet_parser
     packet_type = packet_parser(buf);
-    fprintf(stderr, "buffer:%s\n", (char*)buf);
-
+    print_pkt((data_packet_t*)buf);
     // switch on packet type
     switch(packet_type) {
         // case WhoHas
@@ -92,16 +89,34 @@ void process_inbound_udp(int sock) {
         }
 
         case PKT_IHAVE: {
+            fprintf(stderr,"get here!\n");
+            // Construct Get Pkt response 
+            queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf);
+            // send out first GET packets 
+            data_packet_t* cur_pkt = NULL;
+            while((cur_pkt = (data_packet_t *)dequeue(get_Pkt_Queue)) != NULL) {
+                //fprintf(stderr, "here\n");
+                Send_WhoHas(cur_pkt);
+                packet_free(cur_pkt);
+            }
+            break;
         }
         case PKT_GET: {
+            // Construct first data pkt
+            // send data pkt
+            fprintf(stderr, "receive get pkt\n");
             break;
         }
 
         case PKT_DATA: {
+            // store data
+            // Construct ACK pkt
+            // send ACK pkt
             break;
         }
 
         case PKT_ACK: {
+            // continue send data pkt if not finished
             break;
         }
         

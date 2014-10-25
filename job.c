@@ -60,13 +60,12 @@ int packet_parser(char* buf) {
     data_packet_t* pkt = (data_packet_t*) buf;
     header_t *hdr = &pkt->header;
     /* check magic number */
-    if(ntohs(hdr->magicnum) != 15441)
+    if(hdr->magicnum != 15441)
         return -1;
     if(hdr->version != 1)
         return -1;
     if(hdr->packet_type < 0 || hdr->packet_type > 5)
         return -1;
-    
     return hdr->packet_type;
 
 }
@@ -202,11 +201,11 @@ int IfIHave(uint8_t *hash_start) {
 
 /** @brief Generate GET pkt
  *  @param pkt incoming Ihave pkt
- *  @param provider the incoming peer who send the IHave
+ *  @(really need?)param provider the incoming peer who send the IHave
  *  @return NULL I dont need to send GET this provider.
  *          a queue of GET pkt
- */
-queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider) {
+ */ 
+queue_t* GET_maker(data_packet_t *ihave_pkt) {
     assert(ihave_pkt->header.packet_type == PKT_IHAVE);
     int num = ihave_pkt->data[0]; // num of chunk that peer has
     //int num_match = 0;
@@ -224,7 +223,7 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider) {
     for (i = 0; i < num; i++) {
         match_id = match_need(hash);
         if (-1 != match_id) {
-            chk[i].pvd = provider;
+            //chk[i].pvd = provider;
             chk[i].num_p = 1;
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
@@ -301,8 +300,8 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
-    print_pkt(pkt);
     int pkt_size = pkt->header.packet_len;
+    print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);

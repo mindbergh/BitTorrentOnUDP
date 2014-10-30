@@ -15,13 +15,12 @@
 #include <assert.h> 
 #include "spiffy.h"
 
-
 #define PACKETLEN       1500
 #define HEADERLEN       16
 #define DATALEN         PACKETLEN - HEADERLEN
 #define MAX_CHUNK		74
 #define BUF_SIZE        60
-
+#define MASTER_CHUNK    "/tmp/C.masterchunk"
 #define PKT_WHOHAS 		0
 #define PKT_IHAVE		1
 #define PKT_GET			2
@@ -34,6 +33,7 @@ typedef struct chunk_s {
 	int id;
 	uint8_t hash[SHA1_HASH_SIZE];
 	char *data;
+    int cur_size;
 	int num_p;
 	bt_peer_t *pvd; /* providers */
 } chunk_t;
@@ -64,15 +64,20 @@ int isFinished();
 int IfIHave(uint8_t *hash_start);
 int packet_parser(char* buf);
 void Send_WhoHas(data_packet_t* pkt);
-void packet_sender(data_packet_t* pkt, struct sockaddr * to);
+void packet_sender(data_packet_t* pkt, struct sockaddr* to);
 queue_t *WhoHas_maker(void);
 data_packet_t *IHave_maker(data_packet_t *whohas_pkt);
 int match_need(uint8_t *hash);
-//queue_t* GET_maker(data_packet_t *pkt, bt_peer_t* provider);
-queue_t* GET_maker(data_packet_t *pkt);
+queue_t* GET_maker(data_packet_t *pkt,bt_peer_t* peer, queue_t* chunk_queue);
+data_packet_t* ACK_maker(int* ack, data_packet_t* pkt);
+data_packet_t* DENIED_maker();
 void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
+void store_data(chunk_t* chunk, data_packet_t* pkt);
+int is_chunk_finished(chunk_t* chunk);
 void packet_free(data_packet_t *pkg);
+void hostToNet(data_packet_t* pkt);
+void netToHost(data_packet_t* pkt);
 void print_pkt(data_packet_t* pkt);
 void print_hash(uint8_t *hash);
 void hostToNet(data_packet_t* pkt);

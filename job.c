@@ -1,4 +1,6 @@
 #include "job.h"
+#include "stdio.h"
+#include <stdlib.h>
 #include <netinet/in.h>
 
 
@@ -201,11 +203,12 @@ int IfIHave(uint8_t *hash_start) {
 
 /** @brief Generate GET pkt
  *  @param pkt incoming Ihave pkt
- *  @(really need?)param provider the incoming peer who send the IHave
+ *  @param provider the incoming peer who send the IHave
+ *  @param chunk list which this connection refer to 
  *  @return NULL I dont need to send GET this provider.
  *          a queue of GET pkt
  */ 
-queue_t* GET_maker(data_packet_t *ihave_pkt) {
+queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk_queue) {
     assert(ihave_pkt->header.packet_type == PKT_IHAVE);
     int num = ihave_pkt->data[0]; // num of chunk that peer has
     //int num_match = 0;
@@ -223,16 +226,83 @@ queue_t* GET_maker(data_packet_t *ihave_pkt) {
     for (i = 0; i < num; i++) {
         match_id = match_need(hash);
         if (-1 != match_id) {
-            //chk[i].pvd = provider;
+            chk[i].pvd = provider;
             chk[i].num_p = 1;
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
+            enqueue(chunk_queue,(void*)(chk+i));
         }
         hash += SHA1_HASH_SIZE;
     }
     return q;
 }
 
+/** @brief Generate data pkt
+ *  @param pkt incoming get pkt 
+ *  @return NULL if failed to generate pkt.
+ *          an ACK packet
+ */
+data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
+    char* data_pkt_array = (char*)malloc(512*1024);
+    int index = 0;
+    FILE* index_file = fopen(config->chunk_file,"r");
+    FILE* data_file;
+    char hash_buffer[5] = {0};
+    char hash[40] = {0};
+    uint8_t chunk_hash[SHA1_HASH_SIZE];
+    char buffer[BT_FILENAME_LEN+5] = {0};
+    char datafile[BT_FILENAME_LEN] = {0};
+
+    // get data file address
+    gets(index_file,BT_FILENAME_LEN+5,buffer);
+    fscanf(buffer,"File: %s\n",datafile);
+    // open data file in binary mode
+    data_file = fopen(datafile,"b");
+
+    while(gets(index_file,60,buffer) != NULL) {
+        if( fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
+            // wrong file format!
+            fprintf(stderr, "wrong file format!\n");
+            fclose(index_file);
+            fclose(data_file);
+            return NULL;
+        } else {
+            hex2binary(hash,SHA1_HASH_SIZE,chunk_hash);
+            if( memcmp(chunk_hash,pkt->data,SHA1_HASH_SIZE) == 0) {
+                index = atoi(index);
+                data_packet_t* data_pkt_array[512];
+                // to do, let fang ming do this one.
+                return NULL;
+            }
+        }
+    }
+    fclose(index_file);
+    fclose(data_file);  
+    return NULL;
+
+}
+
+/** @brief Generate ACK pkt
+ *  @param the last biggest ack number
+ *  @param pkt incoming data pkt 
+ *  @return NULL if failed to generate pkt.
+ *          an ACK packet
+ */
+data_packet_t* ACK_maker(int* ack, data_packet_t* pkt) {
+    assert(pkt->header.packet_type == PKT_DATA);
+    data_packet_t* ack_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, ++(*ack)-1, NULL);
+    return ack_pkt;
+}
+
+/** @brief Generate DENIED pkt
+ *  @return NULL if failed to generate pkt.
+ *          an ACK packet
+ */
+data_packet_t* DENIED_maker() {
+    assert(pkt->header.packet_type == PKT_GET);
+    data_packet_t* denied_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, 0, NULL);
+    return denied_pkt;
+}
 
 /** @brief try to match the incoming IHave to what I want
  *  @param hash the incoming chunk hash to be matched
@@ -272,7 +342,8 @@ data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char 
     pkt->header.packet_len = pkt_len;
     pkt->header.seq_num = seq;
     pkt->header.ack_num = ack;
-    memcpy(pkt->data, data, pkt_len - HEADERLEN);
+    if( pkt->data != NULL) 
+        memcpy(pkt->data, data, pkt_len - HEADERLEN);
     return pkt;
 }
 
@@ -305,6 +376,28 @@ void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);
+}
+
+void store_data(chunk_t* chunk, data_packet_t* pkt) {
+    int size = pkt->header.packet_len - pkt->header.header_len;
+    memcpy(chunk->data+chunk->cur_size,pkt->data,size);
+    chunk->cur_size += size;
+}
+
+/** @brief check if a chunk has been fully downloaded
+ *  @param test chunk
+ *  @return 1 for finished, 0 for not finished
+ */
+int is_chunk_finished(chunk_t* chunk) {
+    uint8_t hash[SHA1_HASH_SIZE];
+    // get hash code
+    shahash(chunk->data,chunk->cur_size,hash);
+    // check hash code
+    if( memcmp(hash == chunk->hash) == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 /** @brief Convert data from local format to network format

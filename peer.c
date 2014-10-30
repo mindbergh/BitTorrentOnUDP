@@ -140,23 +140,32 @@ void process_inbound_udp(int sock) {
 
         case PKT_DATA: {
             down_conn = get_down_conn(&down_pool,peer);
-            // store data
-            store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
-            // Construct ACK pkt
-            data_packet_t* ack_pkt = ACK_maker(&(down_conn->next_pkt),(data_packet_t*)buf);
-            // send ACK pkt
-            packet_sender(ack_pkt,(struct sockaddr *) &from);
-            // check if current chunk downloading finished
-            if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
-                // check current downloading connection finished
-                if(down_conn->get_queue->head == NULL) {
-                    de_down_pool(&down_pool,peer);
-                } else {
-                    // removed finished GET request
-                    dequeue(down_conn->get_queue);
-                    // send out mext GET packets 
-                    packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
+            // check ack number 
+            if(down_conn->next_pkt == (data_packet_t*)buf->header.seq_num) {
+                // store data
+                store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
+                // Construct ACK pkt
+                data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),(data_packet_t*)buf);
+                // send ACK pkt
+                packet_sender(ack_pkt,(struct sockaddr *) &from);
+                // check if current chunk downloading finished
+                if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
+                    // check current downloading connection finished
+                    if(down_conn->get_queue->head == NULL) {
+                        de_down_pool(&down_pool,peer);
+                    } else {
+                        // removed finished GET request
+                        dequeue(down_conn->get_queue);
+                        // send out mext GET packets 
+                        packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
+                    }
                 }
+            } else {
+                // wrong data packet!!!
+                // Construct ACK pkt
+                data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,(data_packet_t*)buf);
+                // send ACK pkt
+                packet_sender(ack_pkt,(struct sockaddr *) &from);
             }
             break;
         }
@@ -192,7 +201,6 @@ void process_inbound_udp(int sock) {
         }
         
         case PKT_DENIED: {
-
             break;
         }
 

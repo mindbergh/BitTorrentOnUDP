@@ -59,6 +59,13 @@ void init_up_conn(up_conn_t* conn, bt_peer_t* receiver,
 	conn->ssthreash = 64;
 }
 
+/** @brief add a downloading connection to download pool
+ *  @param pointer to download connection pool
+ *  @param Pointer to the peer which at the another side
+ *  @param the list of all chunks which currect connection associate
+ *  @param the get requests queue
+ *  @return null if pool is full, new connection if added successfully
+ */
 down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider, 
 	chunk_t* chunk, queue_t* get_queue) { 
 	if( pool->num >= 10) {
@@ -78,10 +85,17 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
 	return pool->connection+i;
 }
 
+/** @brief add a uploading connection to upload pool
+ *  @param pointer to upload connection pool
+ *  @param Pointer to the peer which at the another side
+ *  @param the list of all chunks which currect connection associate
+ *  @param the get requests queue
+ *  @return null if pool is full, new connection if added successfully
+ */
 up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,  
 	data_packet_t* pkt_array) { 
 	if( pool->num >= 10) {
-		return -1;
+		return NULL;
 	}
 	// find next available connection position
 	int i = 0;
@@ -96,6 +110,11 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
 	return pool->connection+i;
 }
 
+/** @brief remove a certain connection from the upload pool
+ *  @param upload pool
+ *  @param the peer which connection associate with 
+ *  @return null
+ */
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
 	up_conn_t* conns = pool->connection;
@@ -117,6 +136,11 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	}
 }
 
+/** @brief remove a certain connection from the download pool
+ *  @param download pool
+ *  @param the peer which connection associate with 
+ *  @return null
+ */
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
 	down_conn_t* conns = pool->connection;
@@ -137,6 +161,11 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	}
 }
 
+/** @brief get the pointer to a certain connection from the download pool
+ *  @param download pool
+ *  @param the peer which connection associate with 
+ *  @return NULL if no such connection found, a pointer to the connection if is in the pool
+ */
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	down_conn_t* conns = pool->connection;
@@ -147,6 +176,12 @@ down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 	}
 }
 
+
+/** @brief get the pointer to a certain connection from the upload pool
+ *  @param upload pool
+ *  @param the peer which connection associate with 
+ *  @return NULL if no such connection found, a pointer to the connection if is in the pool
+ */
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	up_conn_t* conns = pool->connection;
@@ -157,7 +192,12 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 	}
 }
 
-up_conn_recur_send(up_conn_t* conn) {
+
+/** @brief recursively send data packet from upload connection
+ *  @param upload pool
+ *  @return NULL
+ */
+void up_conn_recur_send(up_conn_t* conn) {
 	while(conn->l_avaible - conn->l_ack <= conn->cwnd) {
 		packet_sender(conn->pkt_array[l_avaible]);
 		conn->l_avaible++;

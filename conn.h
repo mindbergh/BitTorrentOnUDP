@@ -23,7 +23,7 @@ typedef struct up_conn_s {
 	int l_ack;
 	int l_available;
 	int duplicate;
-	int cwnd;
+	float cwnd;
 	int ssthreash;
 }up_conn_t;
 
@@ -53,7 +53,7 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer);
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer);
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer);
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer);
-up_conn_recur_send(up_conn_t* conn);
+void up_conn_recur_send(up_conn_t* conn);
 
 #endif
 

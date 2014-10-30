@@ -167,13 +167,13 @@ void process_inbound_udp(int sock) {
             // check ACK
             if( up_conn->l_ack == (data_packet_t*)buf->header.ack_num) {
                 up_conn->l_ack++;
-                if( up_conn->cwnd < up_conn->ssthreash) {
+                if( up_conn->cwnd < up_conn->ssthreash+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;
                     up_conn_recur_send(up_conn);
                 } else {
                     // congestion avoidence state
-                    up_conn->cwnd += 1/up_conn->ssthreash;
+                    up_conn->cwnd += 1/up_conn->cwnd;
                     up_conn_recur_send(up_conn);
                 }
             } else if( l_ack == incoming_ack) {
@@ -192,6 +192,7 @@ void process_inbound_udp(int sock) {
         }
         
         case PKT_DENIED: {
+
             break;
         }
 

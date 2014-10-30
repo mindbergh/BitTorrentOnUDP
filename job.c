@@ -288,9 +288,9 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
  *  @return NULL if failed to generate pkt.
  *          an ACK packet
  */
-data_packet_t* ACK_maker(int* ack, data_packet_t* pkt) {
+data_packet_t* ACK_maker(int ack, data_packet_t* pkt) {
     assert(pkt->header.packet_type == PKT_DATA);
-    data_packet_t* ack_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, ++(*ack)-1, NULL);
+    data_packet_t* ack_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, ack-1, NULL);
     return ack_pkt;
 }
 

@@ -156,7 +156,7 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
 	down_conn_t* conns = pool->connection;
 	while( i < config.max_conn && pool->flag[i] == 1 ) {
-		if( conns[i].provider->id == peer->id) {
+		if(conns[i].provider->id == peer->id) {
 			if(dequeue(conns[i].get_queue) != NULL ) {
 				// This should never happen!
 				fprintf(stderr, "downloading connection pool error!\n");

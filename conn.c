@@ -222,21 +222,31 @@ void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
 	}
 }
 
-/** @brief update the data pkt when new get came
- *  @param upload pool
+/** @brief update the upload connection when new get came
+ *  @param upload connection
+ *	@param receiver peer
  *  @param new get packet
  *  @return NULL
  */
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	// construct new data pkt array
 	data_packet_t* data_pkt_array = DATA_pkt_array_maker(get_pkt);
-	init_up_conn(&conn,peer,data_pkt_array);
+	conn->receiver = peer;
+	conn->pkt_array = data_pkt_array;
+	conn->l_ack = 0;
+	conn->l_available = 1;
+	conn->duplicate = 0;
+	conn->cwnd = INIT_CWND;
+	conn->ssthresh = INIT_SSTHRESH;
 }
 
+/** @brief update the download conection when one chunk finished
+ *  @param download connection
+ *  @param provider
+ *  @return NULL
+ */
 void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 	// removed finished GET request
-    dequeue(conn->get_queue);   // to do free
-    dequeue(conn->chunks); // to do free
-	conn->next_pkt = 0;
+	conn->next_pkt = 1;
 }
 

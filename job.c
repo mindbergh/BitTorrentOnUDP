@@ -254,10 +254,13 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
     char *src;
     struct stat statbuf;
 
-    FILE* index_file = fopen("/tmp/C.masterchunks","r");
+    FILE* index_file = fopen(config.chunk_file,"r");
     int data_fd;
 
-    if(index_file == NULL) fprintf(stderr, "wocao!\n");
+    if(index_file == NULL) {
+        fprintf(stderr, "Fail to open chunk file!!\n"); 
+        return NULL;
+    }
     // get data file address
     fgets(buffer,BT_FILENAME_LEN,index_file);
 
@@ -433,7 +436,7 @@ int is_chunk_finished(chunk_t* chunk) {
         fprintf(stderr, "check finished!!!\n");
     if( cur_size != CHUNK_SIZE) {
         if (VERBOSE)
-            fprintf(stderr, "Not finished yet, cur_size = \n", (cur_size>>10));
+            fprintf(stderr, "Not finished yet, cur_size = %d\n", (cur_size>>10));
         return 0;
     }
     uint8_t hash[SHA1_HASH_SIZE];

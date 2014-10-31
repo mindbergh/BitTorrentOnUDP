@@ -111,7 +111,6 @@ void process_inbound_udp(int sock) {
             break;
         }
         case PKT_GET: {
-            fprintf(stderr, "receive get pkt!!!!!!!\n");
             up_conn = get_up_conn(&up_pool,peer);
             if(up_conn == NULL) {
                 // new connetion
@@ -152,14 +151,21 @@ void process_inbound_udp(int sock) {
                 // Construct ACK pkt
                 data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),(data_packet_t*)buf);
                 // send ACK pkt
-                print_pkt(ack_pkt);
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
                 // check if current chunk downloading finished
                 if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
+                    
                     fprintf(stderr, "finished!\n");
+                    job.num_need--;
+                    dequeue(down_conn->get_queue);   // to do free
+                    dequeue(down_conn->chunks); // to do free
+
                     // check current downloading connection finished
                     if(down_conn->get_queue->head == NULL) {
-                        // all finished !!!
+                        fprintf(stderr, "all get finished!!!\n");
+                        // all finished， cat all chunks into one file
+                        cat_chunks();
+                        // remove this download connection
                         de_down_pool(&down_pool,peer);
                     } else {
                         fprintf(stderr, "send next get!\n");
@@ -222,10 +228,10 @@ void process_inbound_udp(int sock) {
         }
     }
 
-    printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
+    /*printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
            "Incoming message from %s:%d\n\n",
             inet_ntoa(from.sin_addr),
-            ntohs(from.sin_port));
+            ntohs(from.sin_port));*/
 }
 
 void process_get(char *chunkfile, char *outputfile) {

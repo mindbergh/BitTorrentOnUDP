@@ -237,29 +237,32 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
     return q;
 }
 
-/** @brief Generate data pkt
+/** @brief Generate data pkt array
  *  @param pkt incoming get pkt 
  *  @return NULL if failed to generate pkt.
- *          an ACK packet
+ *          data packet array 
  */
 data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
-    char* data_pkt_array = (char*)malloc(512*1024);
-    int index = 0;
-    FILE* index_file = fopen(config->chunk_file,"r");
-    FILE* data_file;
+    data_packet_t** data_pkt_array = (data_packet_t**)malloc(512*sizeof(data_packet_t*));
+    int index = 0, i = 0;
     char hash_buffer[5] = {0};
     char hash[40] = {0};
     uint8_t chunk_hash[SHA1_HASH_SIZE];
     char buffer[BT_FILENAME_LEN+5] = {0};
+    char data_buffer[1024] = {0};
     char datafile[BT_FILENAME_LEN] = {0};
+    char index_buffer[5] = {0};
+
+    FILE* index_file = fopen("/tmp/C.masterchunks","r");
+    FILE* data_file;
 
     // get data file address
-    gets(index_file,BT_FILENAME_LEN+5,buffer);
+    fgets(index_file,BT_FILENAME_LEN+5,buffer);
     fscanf(buffer,"File: %s\n",datafile);
     // open data file in binary mode
-    data_file = fopen(datafile,"b");
+    data_file = fopen(datafile,"rb");
 
-    while(gets(index_file,60,buffer) != NULL) {
+    while(fgets(index_file,60,buffer) != NULL) {
         if( fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
             // wrong file format!
             fprintf(stderr, "wrong file format!\n");
@@ -270,7 +273,15 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
             hex2binary(hash,SHA1_HASH_SIZE,chunk_hash);
             if( memcmp(chunk_hash,pkt->data,SHA1_HASH_SIZE) == 0) {
                 index = atoi(index);
-                data_packet_t* data_pkt_array[512];
+
+                fseek(data_file,index,SEEK_SET);
+                while( i < 512 ) {
+                    // load data
+                    fread(data_buffer,1,1024,data_file);
+                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i,0,data_buffer);
+                    memset(data_buffer,0,1024);
+                    i++;
+                }
                 // to do, let fang ming do this one.
                 return NULL;
             }
@@ -279,7 +290,6 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
     fclose(index_file);
     fclose(data_file);  
     return NULL;
-
 }
 
 /** @brief Generate ACK pkt
@@ -299,7 +309,6 @@ data_packet_t* ACK_maker(int ack, data_packet_t* pkt) {
  *          an ACK packet
  */
 data_packet_t* DENIED_maker() {
-    assert(pkt->header.packet_type == PKT_GET);
     data_packet_t* denied_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, 0, NULL);
     return denied_pkt;
 }
@@ -393,7 +402,7 @@ int is_chunk_finished(chunk_t* chunk) {
     // get hash code
     shahash(chunk->data,chunk->cur_size,hash);
     // check hash code
-    if( memcmp(hash == chunk->hash) == 0) {
+    if( memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {
         return 1;
     } else {
         return 0;

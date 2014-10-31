@@ -11,7 +11,7 @@
 void init_down_pool(down_pool_t* pool) {
 	int i = 0 ;
 	int* flags = pool->flag;
-	while( i < 10) {
+	while(i < 10) {
 		flags[i++] = 0;
 	}
 }
@@ -23,7 +23,7 @@ void init_down_pool(down_pool_t* pool) {
 void init_up_pool(up_pool_t* pool) {
 	int i = 0 ;
 	int* flags = pool->flag;
-	while( i < 10) {
+	while(i < 10) {
 		flags[i++] = 0;
 	}
 }
@@ -55,8 +55,8 @@ void init_up_conn(up_conn_t* conn, bt_peer_t* receiver,
 	conn->l_ack = 0;
 	conn->l_available = 1;
 	conn->duplicate = 0;
-	conn->cwnd = 8;
-	conn->ssthreash = 64;
+	conn->cwnd = INIT_CWND;
+	conn->ssthresh = INIT_SSTHRESH;
 }
 
 /** @brief add a downloading connection to download pool
@@ -126,8 +126,8 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 			conns[i].l_ack = 0;
 			conns[i].l_available = 1;
 			conns[i].duplicate = 0;
-			conns[i].cwnd = 8;
-			conns[i].ssthreash = 64;
+			conns[i].cwnd = INIT_CWND;
+			conns[i].ssthresh = INIT_SSTHRESH;
 			pool->flag[i] = 0;
 			pool->num--;
 			break;

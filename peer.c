@@ -157,8 +157,8 @@ void process_inbound_udp(int sock) {
                         de_down_pool(&down_pool,peer);
                     } else {
                         // removed finished GET request
-                        dequeue(down_conn->get_queue);
-                        // send out mext GET packets 
+                        dequeue(down_conn->get_queue);   // to do free
+                        // send out next GET packets 
                         packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
                     }
                 }

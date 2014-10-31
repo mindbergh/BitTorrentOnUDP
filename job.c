@@ -245,16 +245,18 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
 data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
     data_packet_t** data_pkt_array = (data_packet_t**)malloc(512*sizeof(data_packet_t*));
     int index = 0, i = 0;
-    char hash_buffer[5] = {0};
-    char hash[40] = {0};
+    char hash_buffer[HASH_HEX_SIZE] = {0};
+    char hash_hex[HASH_HEX_SIZE] = {0};
     uint8_t chunk_hash[SHA1_HASH_SIZE];
     char buffer[BT_FILENAME_LEN+5] = {0};
     char data_buffer[1024] = {0};
     char datafile[BT_FILENAME_LEN] = {0};
     char index_buffer[5] = {0};
+    char *scr;
+    struct stat statbuf;
 
     FILE* index_file = fopen("/tmp/C.masterchunks","r");
-    FILE* data_file;
+    int data_fd;
 
     if(index_file == NULL) fprintf(stderr, "wocao!\n");
     // get data file address
@@ -264,37 +266,37 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
     // skip the next line
     fgets(buffer,BT_FILENAME_LEN,index_file);
 
-    // open data file in binary mode
-    data_file = fopen(datafile,"rb");
+    // open file to read 
+    data_fd = open(datafile, O_RDONLY);
+    fstat (data_fd, &statbuf) 
+    src = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, data_fd, 0);
+    close(data_fd);
 
     while(fgets(buffer,60,index_file) != NULL) {
         fprintf(stderr, "read line!\n");
-        if( fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
+        if(fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
             // wrong file format!
             fprintf(stderr, "wrong file format!\n");
             fclose(index_file);
             fclose(data_file);
             return NULL;
         } else {
-            hex2binary(hash,SHA1_HASH_SIZE,chunk_hash);
-            fprintf(stderr, "transformat hash!\n");
-            if( memcmp(chunk_hash,pkt->data,SHA1_HASH_SIZE) == 0) {
-                index = atoi(index);
-
-                fseek(data_file,index,SEEK_SET);
-                while( i < 512 ) {
+            binary2hex(pkt->data,SHA1_HASH_SIZE,hash_hex);
+            fprintf(stderr, "Trans to ascii:%s\n", hash_hex);
+            if(memcmp(hash_hex,hash_buffer,HASH_HEX_SIZE) == 0) {
+                index = atoi(index_buffer);
+                //fseek(data_file,index,SEEK_SET);
+                for (i = 0; i < 512;i++) {
                     // load data
-                    fread(data_buffer,1,1024,data_file);
-                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i,0,data_buffer);
-                    memset(data_buffer,0,1024);
-                    i++;
+                    //fread(data_buffer,1,1024,data_file);
+                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i,0,src+index*512*1024+i*1024);
+                    //memset(data_buffer,0,1024);
                 }
+                munmap(src);
                 return data_pkt_array;
             }
         }
     }
-    fclose(index_file);
-    fclose(data_file);  
     return NULL;
 }
 

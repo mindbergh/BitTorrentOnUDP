@@ -110,8 +110,8 @@ void process_inbound_udp(int sock) {
             }
             break;
         }
-
         case PKT_GET: {
+            fprintf(stderr, "receive get pkt!!!!!!!\n");
             up_conn = get_up_conn(&up_pool,peer);
             if(up_conn == NULL) {
                 // new connetion
@@ -131,16 +131,17 @@ void process_inbound_udp(int sock) {
                     }
                 }
             } else {
+                fprintf(stderr, "update!\n");
                 // a connection already exist! update it
                 update_up_conn(up_conn,peer,(data_packet_t*)buf);
                 // send first data
                 up_conn_recur_send(&up_conn, (struct sockaddr*) &from);
             }
-            fprintf(stderr, "receive get pkt\n");
             break;
         }
 
         case PKT_DATA: {
+            fprintf(stderr, "receive data pkt\n");
             down_conn = get_down_conn(&down_pool,peer);
             // check ack number 
             if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
@@ -152,6 +153,7 @@ void process_inbound_udp(int sock) {
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
                 // check if current chunk downloading finished
                 if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
+                    fprintf(stderr, "finished!\n");
                     // check current downloading connection finished
                     if(down_conn->get_queue->head == NULL) {
                         de_down_pool(&down_pool,peer);
@@ -178,7 +180,7 @@ void process_inbound_udp(int sock) {
             // check ACK
             if( up_conn->l_ack+1 == ((data_packet_t*)buf)->header.ack_num) {
                 up_conn->l_ack++;
-                if( up_conn->cwnd < up_conn->ssthreash+0.0) {
+                if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
@@ -191,7 +193,7 @@ void process_inbound_udp(int sock) {
                 // duplicate ack
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
-                    up_conn->ssthreash = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
+                    up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
                     up_conn->cwnd = 1;
                     up_conn->l_available = up_conn->l_ack+1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
@@ -296,7 +298,6 @@ void peer_run() {
             if (FD_ISSET(sock, &readfds)) {
                  process_inbound_udp(sock);
             }
-
             if (FD_ISSET(STDIN_FILENO, &readfds)) {
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");

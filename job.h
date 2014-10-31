@@ -71,6 +71,7 @@ queue_t* GET_maker(data_packet_t *pkt,bt_peer_t* peer, queue_t* chunk_queue);
 data_packet_t* ACK_maker(int ack, data_packet_t* pkt);
 data_packet_t* DENIED_maker();
 void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data);
+data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
 void store_data(chunk_t* chunk, data_packet_t* pkt);
 int is_chunk_finished(chunk_t* chunk);

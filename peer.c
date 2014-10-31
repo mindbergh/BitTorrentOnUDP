@@ -135,13 +135,13 @@ void process_inbound_udp(int sock) {
                 // a connection already exist! update it
                 update_up_conn(up_conn,peer,(data_packet_t*)buf);
                 // send first data
-                up_conn_recur_send(&up_conn, (struct sockaddr*) &from);
+                up_conn_recur_send(up_conn, (struct sockaddr*) &from);
             }
             break;
         }
 
         case PKT_DATA: {
-            fprintf(stderr, "receive data pkt\n");
+            fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
             down_conn = get_down_conn(&down_pool,peer);
             // check ack number 
             if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
@@ -150,22 +150,28 @@ void process_inbound_udp(int sock) {
                 // Construct ACK pkt
                 data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),(data_packet_t*)buf);
                 // send ACK pkt
+                print_pkt(ack_pkt);
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
                 // check if current chunk downloading finished
                 if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
                     fprintf(stderr, "finished!\n");
                     // check current downloading connection finished
                     if(down_conn->get_queue->head == NULL) {
+                        // all finished !!!
                         de_down_pool(&down_pool,peer);
                     } else {
+                        fprintf(stderr, "send next get!\n");
                         // removed finished GET request
                         dequeue(down_conn->get_queue);   // to do free
                         // send out next GET packets 
+                        print_pkt((data_packet_t*)down_conn->get_queue->head->data);
                         packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
                     }
                 }
+
             } else {
                 // wrong data packet!!!
+                fprintf(stderr, "got invalid data pkt\n");
                 // Construct ACK pkt
                 data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,(data_packet_t*)buf);
                 // send ACK pkt
@@ -173,8 +179,8 @@ void process_inbound_udp(int sock) {
             }
             break;
         }
-
         case PKT_ACK: {
+            fprintf(stderr, "recieve ACK:%d!\n",((data_packet_t*)buf)->header.ack_num );
             // continue send data pkt if not finished
             up_conn = get_up_conn(&up_pool,peer);
             // check ACK
@@ -191,6 +197,7 @@ void process_inbound_udp(int sock) {
                 }
             } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {
                 // duplicate ack
+                fprintf(stderr, "got duplicate!:%d\n",up_conn->duplicate+1 );
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
                     up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;

@@ -20,7 +20,6 @@
 #define DATALEN         PACKETLEN - HEADERLEN
 #define MAX_CHUNK		74
 #define BUF_SIZE        60
-#define MASTER_CHUNK    "/tmp/C.masterchunk"
 #define PKT_WHOHAS 		0
 #define PKT_IHAVE		1
 #define PKT_GET			2
@@ -69,7 +68,7 @@ queue_t *WhoHas_maker(void);
 data_packet_t *IHave_maker(data_packet_t *whohas_pkt);
 int match_need(uint8_t *hash);
 queue_t* GET_maker(data_packet_t *pkt,bt_peer_t* peer, queue_t* chunk_queue);
-data_packet_t* ACK_maker(int* ack, data_packet_t* pkt);
+data_packet_t* ACK_maker(int ack, data_packet_t* pkt);
 data_packet_t* DENIED_maker();
 void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);

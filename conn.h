@@ -19,7 +19,7 @@ typedef struct down_conn_s {
 
 typedef struct up_conn_s {
 	bt_peer_t* receiver;
-	data_packet_t* pkt_array[512];
+	data_packet_t* pkt_array;
 	int l_ack;
 	int l_available;
 	int duplicate;
@@ -53,7 +53,7 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer);
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer);
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer);
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer);
-void up_conn_recur_send(up_conn_t* conn);
+void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to);
 
 #endif
 

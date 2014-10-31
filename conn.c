@@ -195,16 +195,26 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 
 /** @brief recursively send data packet from upload connection
  *  @param upload pool
+ *  @param the address where pkt is going to be send to
  *  @return NULL
  */
-void up_conn_recur_send(up_conn_t* conn) {
-	while(conn->l_avaible - conn->l_ack <= conn->cwnd) {
-		packet_sender(conn->pkt_array[l_avaible]);
-		conn->l_avaible++;
+void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
+	while(conn->l_available - conn->l_ack <= conn->cwnd) {
+		packet_sender(conn->pkt_array+conn->l_available,to);
+		conn->l_available++;
 	}
 }
 
-
+/** @brief update the data pkt when new get came
+ *  @param upload pool
+ *  @param new get packet
+ *  @return NULL
+ */
+void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
+	// construct new data pkt array
+	data_packet_t* data_pkt_array = DATA_pkt_array_maker(get_pkt);
+	init_up_conn(conn,peer,data_pkt_array);
+}
 
 
 

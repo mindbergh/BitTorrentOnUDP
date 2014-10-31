@@ -125,14 +125,16 @@ void process_inbound_udp(int sock) {
                     data_packet_t** data_pkt_array = DATA_pkt_array_maker((data_packet_t*)buf);
                     // create a new uploading connection 
                     up_conn = en_up_pool(&up_pool,peer,data_pkt_array);
-                    // send first data
-                    up_conn_recur_send(up_conn);
+                    if( up_conn != NULL) {
+                        // send first data
+                        up_conn_recur_send(up_conn, (struct sockaddr*) &from);
+                    }
                 }
             } else {
                 // a connection already exist! update it
-                update_up_conn(up_conn,(data_packet_t*)buf);
+                update_up_conn(up_conn,peer,(data_packet_t*)buf);
                 // send first data
-                up_conn_recur_send(&up_conn);
+                up_conn_recur_send(&up_conn, (struct sockaddr*) &from);
             }
             fprintf(stderr, "receive get pkt\n");
             break;
@@ -141,7 +143,7 @@ void process_inbound_udp(int sock) {
         case PKT_DATA: {
             down_conn = get_down_conn(&down_pool,peer);
             // check ack number 
-            if(down_conn->next_pkt == (data_packet_t*)buf->header.seq_num) {
+            if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
                 // store data
                 store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
                 // Construct ACK pkt
@@ -172,31 +174,30 @@ void process_inbound_udp(int sock) {
 
         case PKT_ACK: {
             // continue send data pkt if not finished
-            up_conn = get_up_conn(peer);
+            up_conn = get_up_conn(&up_pool,peer);
             // check ACK
-            if( up_conn->l_ack == (data_packet_t*)buf->header.ack_num) {
+            if( up_conn->l_ack+1 == ((data_packet_t*)buf)->header.ack_num) {
                 up_conn->l_ack++;
                 if( up_conn->cwnd < up_conn->ssthreash+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;
-                    up_conn_recur_send(up_conn);
+                    up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 } else {
                     // congestion avoidence state
                     up_conn->cwnd += 1/up_conn->cwnd;
-                    up_conn_recur_send(up_conn);
+                    up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 }
-            } else if( l_ack == incoming_ack) {
+            } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {
                 // duplicate ack
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
-                    up_conn->ssthreash = max(up_conn->cwnd/2,2);
+                    up_conn->ssthreash = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
                     up_conn->cwnd = 1;
-                    up_conn->l_available = l_ack+1;
-                    up_conn_recur_send(up_conn);
+                    up_conn->l_available = up_conn->l_ack+1;
+                    up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                     up_conn->duplicate = 0;
                 }
             }
-
             break;
         }
         

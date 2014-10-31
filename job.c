@@ -49,7 +49,8 @@ int init_job(char* chunkFile) {
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
         job.chunks[i].pvd = NULL;
         job.chunks[i].num_p = 0;
-        job.chunks[i].data = NULL;
+        job.chunks[i].cur_size = 0;
+        job.chunks[i].data = malloc(sizeof(char)*512*1024);
         i++;
     }    
     fclose(file);
@@ -133,7 +134,7 @@ void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data) {
     ptr = data + 4;        /* shift 4 to fill in chunk hashs */
     for (i = 0; i < num_chunk; i++) {
         /* Chunk Hash 20 bytes */
-        if (chunks[i].data != NULL) // I have this chunk already
+        if (chunks[i].cur_size == 512*1024) // I have this chunk already
             continue;
         num_need++;
         memcpy(ptr + i * SHA1_HASH_SIZE, chunks[i].hash, SHA1_HASH_SIZE);
@@ -294,7 +295,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
                     //memset(data_buffer,0,1024);
                 }
                 munmap(src,statbuf.st_size);
-                print_pkt((data_packet_t*)(data_pkt_array[0]));
+                //print_pkt((data_packet_t*)(data_pkt_array[0]));
                 return data_pkt_array;
             }
         }
@@ -310,7 +311,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
  */
 data_packet_t* ACK_maker(int ack, data_packet_t* pkt) {
     assert(pkt->header.packet_type == PKT_DATA);
-    data_packet_t* ack_pkt = packet_maker(PKT_DENIED, HEADERLEN, 0, ack-1, NULL);
+    data_packet_t* ack_pkt = packet_maker(PKT_ACK, HEADERLEN, 0, ack-1, NULL);
     return ack_pkt;
 }
 
@@ -391,8 +392,8 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
-//    fprintf(stderr, "send pkt!*********\n");
-//    print_pkt(pkt);
+    //fprintf(stderr, "send pkt!*********\n");
+    //print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);
@@ -409,6 +410,10 @@ void store_data(chunk_t* chunk, data_packet_t* pkt) {
  *  @return 1 for finished, 0 for not finished
  */
 int is_chunk_finished(chunk_t* chunk) {
+    fprintf(stderr, "check finished!!!\n");
+    if( chunk->cur_size != 512*1024) {
+        return 0;
+    }
     uint8_t hash[SHA1_HASH_SIZE];
     // get hash code
     shahash(chunk->data,chunk->cur_size,hash);
@@ -440,8 +445,8 @@ void netToHost(data_packet_t* pkt) {
     pkt->header.magicnum = ntohs(pkt->header.magicnum);
     pkt->header.header_len = ntohs(pkt->header.header_len);
     pkt->header.packet_len = ntohs(pkt->header.packet_len);
-    pkt->header.seq_num = ntohs(pkt->header.seq_num);
-    pkt->header.ack_num = ntohs(pkt->header.ack_num);
+    pkt->header.seq_num = ntohl(pkt->header.seq_num);
+    pkt->header.ack_num = ntohl(pkt->header.ack_num);
 }
 
 /** @brief free pkt

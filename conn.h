@@ -26,7 +26,7 @@ typedef struct up_conn_s {
 	int l_available;
 	int duplicate;
 	float cwnd;
-	int ssthreash;
+	int ssthresh;
 }up_conn_t;
 
 typedef struct down_pool_s {

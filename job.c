@@ -1,11 +1,5 @@
 #include "job.h"
-#include "stdio.h"
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
+
 
 
 extern bt_config_t config;
@@ -287,10 +281,10 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
             if(memcmp(hash_hex,hash_buffer,HASH_HEX_SIZE) == 0) {
                 index = atoi(index_buffer);
                 //fseek(data_file,index,SEEK_SET);
-                for (i = 0; i < 512;i++) {
+                for (i = 0;i < 512;i++) {
                     // load data
                     //fread(data_buffer,1,1024,data_file);
-                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i+1,0,src+index*512*1024+i*1024);
+                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i+1,0,src+index*CHUNK_SIZE+i*1024);
                     //memset(data_buffer,0,1024);
                 }
                 munmap(src,statbuf.st_size);
@@ -404,11 +398,37 @@ void store_data(chunk_t* chunk, data_packet_t* pkt) {
     chunk->cur_size += size;
 }
 
+
+void cat_chunks() {
+    int fdout;
+    char *dst;
+    int i;
+    int size = job.num_chunk * CHUNK_SIZE;
+    int num_chk = job.num_chunk;
+    chunk_t *chk_arr = job.chunks;
+
+    assert(job.num_need == 0);
+
+    fdout = open(config.output_file, O_RDWR | O_CREAT | O_TRUNC, FILE_MODE);
+    lseek (fdout, size - 1, SEEK_SET)
+    write (fdout, "", 1)  // write one byte the last position of output file
+    dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0)
+    for (i = 0; i < num_chk; i++) {
+        memcpy(dst + i*CHUNK_SIZE, chk_arr[i].data, CHUNK_SIZE);
+    }
+    close(fdout);
+    munmap(dst, size);
+
+}
+
+
 /** @brief check if a chunk has been fully downloaded
  *  @param test chunk
  *  @return 1 for finished, 0 for not finished
  */
 int is_chunk_finished(chunk_t* chunk) {
+    if (chunk->cur_size < CHUNK_SIZE)
+        return 0;
     uint8_t hash[SHA1_HASH_SIZE];
     // get hash code
     shahash(chunk->data,chunk->cur_size,hash);

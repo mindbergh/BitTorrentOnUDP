@@ -12,7 +12,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h> 
-#include <assert.h> 
+#include <assert.h>
+#include "stdio.h"
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include "spiffy.h"
 
 #define PACKETLEN       1500
@@ -26,6 +33,7 @@
 #define PKT_DATA		3
 #define PKT_ACK 		4
 #define PKT_DENIED		5      
+#define CHUNK_SIZE      1 << 19  //size of a single chunk in Bytes
 
 
 typedef struct chunk_s {
@@ -37,8 +45,10 @@ typedef struct chunk_s {
 	bt_peer_t *pvd; /* providers */
 } chunk_t;
  
+// num_chunk * 512 * 1024 = file_size max num_chunk = 4095
+// largest file supports is 2GB - 512KB
 typedef struct job_s {
-    int num_chunk;
+    int num_chunk;   
     int num_need;
     chunk_t* chunks;
 } job_t;
@@ -74,6 +84,7 @@ void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data);
 data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
 void store_data(chunk_t* chunk, data_packet_t* pkt);
+void cat_chunks();
 int is_chunk_finished(chunk_t* chunk);
 void packet_free(data_packet_t *pkg);
 void hostToNet(data_packet_t* pkt);

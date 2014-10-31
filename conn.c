@@ -59,7 +59,7 @@ void init_down_conn(down_conn_t** conn, bt_peer_t* provider,
  *  @return null
  */
 void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,  
-	data_packet_t* pkt_array) {
+	data_packet_t** pkt_array) {
 	(*conn) = (up_conn_t*)malloc(sizeof(up_conn_t));
 	(*conn)->receiver = receiver;
 	(*conn)->pkt_array = pkt_array;
@@ -82,7 +82,6 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
 	if( pool->num >= config.max_conn) {
 		return NULL;
 	}
-
 	// find next available connection position
 	int i = 0;
 	while(i<10) {
@@ -93,7 +92,8 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
 	init_down_conn(&(pool->connection[i]),provider,chunk, get_queue);
 	pool->flag[i] = 1;
 	pool->num++;
-	return pool->connection+i;
+	int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
+	return pool->connection[i];
 }
 
 /** @brief add a uploading connection to upload pool
@@ -104,7 +104,7 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
  *  @return null if pool is full, new connection if added successfully
  */
 up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,  
-	data_packet_t* pkt_array) { 
+	data_packet_t** pkt_array) { 
 	if( pool->num >= config.max_conn) {
 		return NULL;
 	}
@@ -118,7 +118,7 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
 	init_up_conn(&(pool->connection[i]),receiver,pkt_array);
 	pool->flag[i] = 1;
 	pool->num++;
-	return pool->connection+i;
+	return pool->connection[i];
 }
 
 /** @brief remove a certain connection from the upload pool
@@ -215,8 +215,10 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
  *  @return NULL
  */
 void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
-	while(conn->l_available - conn->l_ack <= conn->cwnd) {
-		packet_sender((data_packet_t*)(conn->pkt_array+conn->l_available),to);
+	while(conn->l_available - conn->l_ack < conn->cwnd) {
+		fprintf(stderr, "send data:%d!!!!\n",conn->l_available);
+		//print_pkt((data_packet_t*)(conn->pkt_array[conn->l_available]));
+		packet_sender((data_packet_t*)(conn->pkt_array[conn->l_available-1]),to);
 		conn->l_available++;
 	}
 }

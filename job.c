@@ -2,6 +2,10 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 
 extern bt_config_t config;
@@ -242,7 +246,7 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
  *  @return NULL if failed to generate pkt.
  *          data packet array 
  */
-data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
+data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
     data_packet_t** data_pkt_array = (data_packet_t**)malloc(512*sizeof(data_packet_t*));
     int index = 0, i = 0;
     char hash_buffer[HASH_HEX_SIZE] = {0};
@@ -252,7 +256,7 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
     char data_buffer[1024] = {0};
     char datafile[BT_FILENAME_LEN] = {0};
     char index_buffer[5] = {0};
-    char *scr;
+    char *src;
     struct stat statbuf;
 
     FILE* index_file = fopen("/tmp/C.masterchunks","r");
@@ -268,31 +272,29 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
 
     // open file to read 
     data_fd = open(datafile, O_RDONLY);
-    fstat (data_fd, &statbuf) 
+    fstat (data_fd, &statbuf);
     src = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, data_fd, 0);
     close(data_fd);
-
+    binary2hex(pkt->data,SHA1_HASH_SIZE,hash_hex);
     while(fgets(buffer,60,index_file) != NULL) {
-        fprintf(stderr, "read line!\n");
-        if(fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
+        if(sscanf(buffer,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
             // wrong file format!
             fprintf(stderr, "wrong file format!\n");
             fclose(index_file);
-            fclose(data_file);
+            munmap(src,statbuf.st_size);
             return NULL;
         } else {
-            binary2hex(pkt->data,SHA1_HASH_SIZE,hash_hex);
-            fprintf(stderr, "Trans to ascii:%s\n", hash_hex);
             if(memcmp(hash_hex,hash_buffer,HASH_HEX_SIZE) == 0) {
                 index = atoi(index_buffer);
                 //fseek(data_file,index,SEEK_SET);
                 for (i = 0; i < 512;i++) {
                     // load data
                     //fread(data_buffer,1,1024,data_file);
-                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i,0,src+index*512*1024+i*1024);
+                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i+1,0,src+index*512*1024+i*1024);
                     //memset(data_buffer,0,1024);
                 }
-                munmap(src);
+                munmap(src,statbuf.st_size);
+                print_pkt((data_packet_t*)(data_pkt_array[0]));
                 return data_pkt_array;
             }
         }
@@ -389,7 +391,8 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
-    print_pkt(pkt);
+//    fprintf(stderr, "send pkt!*********\n");
+//    print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);

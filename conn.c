@@ -4,14 +4,19 @@
 #include "queue.h"
 #include "conn.h"
 
+extern bt_config_t config;
+
 /** @brief Initilize a downloading queue
  *  @param The pointer to the pool for initialization
  *  @return null
  */
 void init_down_pool(down_pool_t* pool) {
 	int i = 0 ;
+	int max = config.max_conn;
+	pool->flag = (int*)malloc(sizeof(int)*max);
+	pool->connection = (down_conn_t**)malloc(sizeof(down_conn_t*)*max);	
 	int* flags = pool->flag;
-	while(i < 10) {
+	while(i < max) {
 		flags[i++] = 0;
 	}
 }
@@ -22,8 +27,12 @@ void init_down_pool(down_pool_t* pool) {
  */
 void init_up_pool(up_pool_t* pool) {
 	int i = 0 ;
+	int max = config.max_conn;
+
+	pool->flag = (int*)malloc(sizeof(int)*max);
+	pool->connection = (down_conn_t*)malloc(sizeof(down_conn_t));
 	int* flags = pool->flag;
-	while(i < 10) {
+	while(i < max) {
 		flags[i++] = 0;
 	}
 }
@@ -34,12 +43,13 @@ void init_up_pool(up_pool_t* pool) {
  *  @param chunk for downloading
  *  @return null
  */
-void init_down_conn(down_conn_t* conn, bt_peer_t* provider, 
+void init_down_conn(down_conn_t** conn, bt_peer_t* provider, 
 	chunk_t* chunk, queue_t* get_queue) {
-	conn->provider = provider;
-	conn->chunks = chunk;
-	conn->get_queue = get_queue;
-	conn->next_pkt = 1;
+	(*conn) = (down_conn_t*)malloc(sizeof(down_conn_t));
+	(*conn)->provider = provider;
+	(*conn)->chunks = chunk;
+	(*conn)->get_queue = get_queue;
+	(*conn)->next_pkt = 1;
 }
 
 /** @brief Initilize a uploading connection
@@ -48,15 +58,16 @@ void init_down_conn(down_conn_t* conn, bt_peer_t* provider,
  *  @param packet array which contains the packet to be sent
  *  @return null
  */
-void init_up_conn(up_conn_t* conn, bt_peer_t* receiver,  
+void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,  
 	data_packet_t* pkt_array) {
-	conn->receiver = receiver;
-	conn->pkt_array = pkt_array;
-	conn->l_ack = 0;
-	conn->l_available = 1;
-	conn->duplicate = 0;
-	conn->cwnd = INIT_CWND;
-	conn->ssthresh = INIT_SSTHRESH;
+	(*conn) = (up_conn_t*)malloc(sizeof(up_conn_t));
+	(*conn)->receiver = receiver;
+	(*conn)->pkt_array = pkt_array;
+	(*conn)->l_ack = 0;
+	(*conn)->l_available = 1;
+	(*conn)->duplicate = 0;
+	(*conn)->cwnd = INIT_CWND;
+	(*conn)->ssthresh = INIT_SSTHRESH;
 }
 
 /** @brief add a downloading connection to download pool
@@ -68,7 +79,7 @@ void init_up_conn(up_conn_t* conn, bt_peer_t* receiver,
  */
 down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider, 
 	chunk_t* chunk, queue_t* get_queue) { 
-	if( pool->num >= 10) {
+	if( pool->num >= config.max_conn) {
 		return NULL;
 	}
 
@@ -94,7 +105,7 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
  */
 up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,  
 	data_packet_t* pkt_array) { 
-	if( pool->num >= 10) {
+	if( pool->num >= config.max_conn) {
 		return NULL;
 	}
 	// find next available connection position
@@ -118,7 +129,7 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
 	up_conn_t* conns = pool->connection;
-	while( i < 10 && pool->flag[i] == 1) {
+	while( i < config.max_conn && pool->flag[i] == 1) {
 		if( conns[i].receiver->id == peer->id) {
 			conns[i].receiver = NULL;
 			free(conns[i].pkt_array);
@@ -144,8 +155,8 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
 	down_conn_t* conns = pool->connection;
-	while( i < 10 ) {
-		if( conns[i].provider->id == peer->id && pool->flag[i] == 1) {
+	while( i < config.max_conn && pool->flag[i] == 1 ) {
+		if( conns[i].provider->id == peer->id) {
 			if(dequeue(conns[i].get_queue) != NULL ) {
 				// This should never happen!
 				fprintf(stderr, "downloading connection pool error!\n");
@@ -169,7 +180,7 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	down_conn_t* conns = pool->connection;
-	while( i<=10 && i < pool->num) {
+	while( i<= config.max_conn && i < pool->num) {
 		if( conns[i].provider->id == peer->id && pool->flag[i] == 1) {
 			return &conns[i];	
 		}
@@ -188,7 +199,7 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	up_conn_t* conns = pool->connection;
 	fprintf(stderr, "conn num:%d\n", pool->num);
-	while( i<=10 && i < pool->num ) {
+	while( i<= config.max_conn && i < pool->num ) {
 		if( conns[i].receiver->id == peer->id && pool->flag[i] == 1) {
 			return &conns[i];	
 		}
@@ -218,7 +229,7 @@ void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	// construct new data pkt array
 	data_packet_t* data_pkt_array = DATA_pkt_array_maker(get_pkt);
-	init_up_conn(conn,peer,data_pkt_array);
+	init_up_conn(&conn,peer,data_pkt_array);
 }
 
 

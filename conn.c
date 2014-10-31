@@ -233,6 +233,10 @@ void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	init_up_conn(&conn,peer,data_pkt_array);
 }
 
-
-
+void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
+	// removed finished GET request
+    dequeue(conn->get_queue);   // to do free
+    dequeue(conn->chunks); // to do free
+	conn->next_pkt = 0;
+}
 

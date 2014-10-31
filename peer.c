@@ -135,7 +135,8 @@ void process_inbound_udp(int sock) {
                 // a connection already exist! update it
                 update_up_conn(up_conn,peer,(data_packet_t*)buf);
                 // send first data
-                print_pkt((data_packet_t*)up_conn->data_pkt_array[0]);
+                print_pkt((data_packet_t*)(up_conn->pkt_array[0]));
+
                 up_conn_recur_send(up_conn, (struct sockaddr*) &from);
             }
             break;
@@ -162,8 +163,8 @@ void process_inbound_udp(int sock) {
                         de_down_pool(&down_pool,peer);
                     } else {
                         fprintf(stderr, "send next get!\n");
-                        // removed finished GET request
-                        dequeue(down_conn->get_queue);   // to do free
+                        // update down_conn
+                        update_down_conn(down_conn,peer);
                         // send out next GET packets 
                         packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
                     }

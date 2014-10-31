@@ -418,11 +418,11 @@ void cat_chunks() {
     write (fdout, "", 1);  // write one byte the last position of output file
     dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
     for (i = 0; i < num_chk; i++) {
-        memcpy(dst + i*CHUNK_SIZE, chk_arr[i].data, CHUNK_SIZE);
+        fprintf(stderr, "assemble:%s\n",chk_arr[i].data);
+        memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
     }
     close(fdout);
     munmap(dst, size);
-
 }
 
 

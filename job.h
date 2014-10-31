@@ -33,8 +33,9 @@
 #define PKT_DATA		3
 #define PKT_ACK 		4
 #define PKT_DENIED		5      
-#define CHUNK_SIZE      1 << 19  //size of a single chunk in Bytes
+#define CHUNK_SIZE      (1 << 19)  //size of a single chunk in Bytes
 #define VERBOSE         1
+#define DEF_MODE   S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH
 
 
 typedef struct chunk_s {

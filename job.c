@@ -256,13 +256,19 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
     FILE* index_file = fopen("/tmp/C.masterchunks","r");
     FILE* data_file;
 
+    if(index_file == NULL) fprintf(stderr, "wocao!\n");
     // get data file address
-    fgets(index_file,BT_FILENAME_LEN+5,buffer);
-    fscanf(buffer,"File: %s\n",datafile);
+    fgets(buffer,BT_FILENAME_LEN,index_file);
+
+    sscanf(buffer,"File: %s\n",datafile);
+    // skip the next line
+    fgets(buffer,BT_FILENAME_LEN,index_file);
+
     // open data file in binary mode
     data_file = fopen(datafile,"rb");
 
-    while(fgets(index_file,60,buffer) != NULL) {
+    while(fgets(buffer,60,index_file) != NULL) {
+        fprintf(stderr, "read line!\n");
         if( fscanf(index_file,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
             // wrong file format!
             fprintf(stderr, "wrong file format!\n");
@@ -271,6 +277,7 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
             return NULL;
         } else {
             hex2binary(hash,SHA1_HASH_SIZE,chunk_hash);
+            fprintf(stderr, "transformat hash!\n");
             if( memcmp(chunk_hash,pkt->data,SHA1_HASH_SIZE) == 0) {
                 index = atoi(index);
 
@@ -282,8 +289,7 @@ data_packet_t* DATA_pkt_array_maker(data_packet_t* pkt) {
                     memset(data_buffer,0,1024);
                     i++;
                 }
-                // to do, let fang ming do this one.
-                return NULL;
+                return data_pkt_array;
             }
         }
     }

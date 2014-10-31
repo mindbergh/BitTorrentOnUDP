@@ -113,7 +113,7 @@ void process_inbound_udp(int sock) {
 
         case PKT_GET: {
             up_conn = get_up_conn(&up_pool,peer);
-            if(up_conn = NULL) {
+            if(up_conn == NULL) {
                 // new connetion
                 if(up_pool.num >= 10) {
                     // sending pool full,construct denied pkt
@@ -121,7 +121,7 @@ void process_inbound_udp(int sock) {
                     // send denied pkt
                     packet_sender(denied_pkt,(struct sockaddr*) &from);
                 } else {
-                    // get chunk file
+                    // get data pkt array
                     data_packet_t** data_pkt_array = DATA_pkt_array_maker((data_packet_t*)buf);
                     // create a new uploading connection 
                     up_conn = en_up_pool(&up_pool,peer,data_pkt_array);

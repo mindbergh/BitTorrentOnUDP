@@ -1,5 +1,5 @@
 #include "job.h"
-
+#include <time.h>
 
 
 extern bt_config_t config;
@@ -52,6 +52,9 @@ int init_job(char* chunkFile, char* output_file) {
     // set output file address and format
     strcpy(config.output_file,output_file);
     config.output_file[strlen(output_file)] = '\0';
+
+    job.start_time = time(NULL);
+    //fprintf(job.cwnd, "Start!\n");
     // successfully initilize job
     return 0;
 }
@@ -411,15 +414,14 @@ void cat_chunks() {
     int fdout;
     char *dst;
     int i;
-    int size = job.num_chunk * CHUNK_SIZE;
     int num_chk = job.num_chunk;
-    
+    int size = num_chk * CHUNK_SIZE;
     chunk_t *chk_arr = job.chunks;
 
     assert(job.num_need == 0);
 
 
-    fdout = fopen(config.output_file, "wb");
+    fdout = fopen(config.output_file, "w");
     //fseek (fdout, size - 1, SEEK_SET);
     //write (fdout, "", 1);  // write one byte the last position of output file
     //fseek (fdout,0,SEEK_SET);

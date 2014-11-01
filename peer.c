@@ -196,10 +196,14 @@ void process_inbound_udp(int sock) {
                 if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;
-                    up_conn_recur_send(up_conn,(struct sockaddr*) &from);
+                    if (VERBOSE)
+                        print_cwnd(up_conn);
+                        up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 } else {
                     // congestion avoidence state
                     up_conn->cwnd += 1/up_conn->cwnd;
+                    if (VERBOSE)
+                        print_cwnd(up_conn);
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 }
             } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {
@@ -212,6 +216,8 @@ void process_inbound_udp(int sock) {
                     up_conn->l_available = up_conn->l_ack+1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                     up_conn->duplicate = 0;
+                    if (VERBOSE)
+                        print_cwnd(up_conn);
                 }
             }
             break;

@@ -48,6 +48,8 @@ int init_job(char* chunkFile) {
         i++;
     }    
     fclose(file);
+    job.start_time = time(NULL);
+    job.cwnd = fopen("./cwnd.dat", "w");
     // successfully initilize job
     return 0;
 }
@@ -407,8 +409,8 @@ void cat_chunks() {
     int fdout;
     char *dst;
     int i;
-    int size = job.num_chunk * CHUNK_SIZE;
     int num_chk = job.num_chunk;
+    int size = num_chk * CHUNK_SIZE;
     chunk_t *chk_arr = job.chunks;
 
     assert(job.num_need == 0);
@@ -422,7 +424,6 @@ void cat_chunks() {
     }
     close(fdout);
     munmap(dst, size);
-
 }
 
 

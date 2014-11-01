@@ -13,19 +13,19 @@
 #include <string.h>
 #include <stdlib.h> 
 #include <assert.h>
-#include "stdio.h"
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <time.h>
 #include "spiffy.h"
 
 #define PACKETLEN       1500
 #define HEADERLEN       16
 #define DATALEN         PACKETLEN - HEADERLEN
-#define MAX_CHUNK		74
+#define MAX_CHUNK		74   //Max number of chunk in a single whohas pkt
 #define BUF_SIZE        60
 #define PKT_WHOHAS 		0
 #define PKT_IHAVE		1
@@ -52,6 +52,8 @@ typedef struct chunk_s {
 typedef struct job_s {
     int num_chunk;   
     int num_need;
+    time_t start_time;
+    FILE *cwnd;
     chunk_t* chunks;
 } job_t;
 

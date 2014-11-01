@@ -5,6 +5,7 @@
 #include "conn.h"
 
 extern bt_config_t config;
+extern job_t job;
 
 /** @brief Initilize a downloading queue
  *  @param The pointer to the pool for initialization
@@ -84,7 +85,7 @@ down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider,
 	}
 	// find next available connection position
 	int i = 0;
-	while(i<10) {
+	while (i<10) {
 		if( pool->flag[i] == 0)
 			break;
 		i++;
@@ -250,3 +251,7 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 	conn->next_pkt = 1;
 }
 
+void print_cwnd(up_conn_t *conn) {
+	time_t now = time(NULL);
+	fprint(job.cwnd, "f%d\t%f\t%ld\n", conn->receive.id, conn->cwnd, now - job.start_time);
+}

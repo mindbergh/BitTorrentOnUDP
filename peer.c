@@ -238,7 +238,7 @@ void process_get(char *chunkfile, char *outputfile) {
     printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n",
     chunkfile, outputfile);
     /* Create a Job */
-    init_job(chunkfile);
+    init_job(chunkfile,outputfile);
 
     /* call whohasmaker */
     queue_t* whoHasQueue = WhoHas_maker();

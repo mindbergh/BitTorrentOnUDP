@@ -11,7 +11,7 @@ extern queue_t* hasChunk;
  *  @return 0 if job initilization is successed
  *          1 if failed
  */
-int init_job(char* chunkFile) {
+int init_job(char* chunkFile, char* output_file) {
     FILE* file = fopen(chunkFile,"r");
     if( file == NULL)
         return -1; // fail to open job file
@@ -48,6 +48,10 @@ int init_job(char* chunkFile) {
         i++;
     }    
     fclose(file);
+
+    // set output file address and format
+    strcpy(config.output_file,output_file);
+    config.output_file[strlen(output_file)] = '\0';
     // successfully initilize job
     return 0;
 }
@@ -411,7 +415,6 @@ void cat_chunks() {
     int num_chk = job.num_chunk;
     
     chunk_t *chk_arr = job.chunks;
-    char null[CHUNK_SIZE];
 
     assert(job.num_need == 0);
 

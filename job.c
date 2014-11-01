@@ -299,7 +299,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
                     //memset(data_buffer,0,1024);
                 }
                 munmap(src,statbuf.st_size);
-                //print_pkt((data_packet_t*)(data_pkt_array[0]));
+                print_pkt((data_packet_t*)(data_pkt_array[0]));
                 return data_pkt_array;
             }
         }
@@ -396,8 +396,9 @@ void Send_WhoHas(data_packet_t* pkt) {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
-    //fprintf(stderr, "send pkt!*********\n");
-    //print_pkt(pkt);
+    if (VERBOSE)
+        fprintf(stderr, "send pkt!*********\n");
+    print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
     netToHost(pkt);
@@ -411,7 +412,7 @@ void store_data(chunk_t* chunk, data_packet_t* pkt) {
 
 
 void cat_chunks() {
-    int fdout;
+    FILE* fdout;
     char *dst;
     int i;
     int num_chk = job.num_chunk;
@@ -428,7 +429,7 @@ void cat_chunks() {
     //dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
     for (i = 0; i < num_chk; i++) {
         //memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
-        fwrite(chk_arr[i].data,CHUNK_SIZE,1,fdout);
+        fwrite(chk_arr[i].data,1,CHUNK_SIZE,fdout);
         //memcpy(null, chk_arr[i].data, CHUNK_SIZE);           
 
     }

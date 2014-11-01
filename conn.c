@@ -44,7 +44,7 @@ void init_up_pool(up_pool_t* pool) {
  *  @return null
  */
 void init_down_conn(down_conn_t** conn, bt_peer_t* provider, 
-	chunk_t* chunk, queue_t* get_queue) {
+	queue_t* chunk, queue_t* get_queue) {
 	(*conn) = (down_conn_t*)malloc(sizeof(down_conn_t));
 	(*conn)->provider = provider;
 	(*conn)->chunks = chunk;
@@ -78,7 +78,7 @@ void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,
  *  @return null if pool is full, new connection if added successfully
  */
 down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider, 
-	chunk_t* chunk, queue_t* get_queue) { 
+queue_t* chunk, queue_t* get_queue) { 
 	if( pool->num >= config.max_conn) {
 		return NULL;
 	}

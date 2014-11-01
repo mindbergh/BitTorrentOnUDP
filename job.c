@@ -409,20 +409,27 @@ void cat_chunks() {
     int i;
     int size = job.num_chunk * CHUNK_SIZE;
     int num_chk = job.num_chunk;
+    
     chunk_t *chk_arr = job.chunks;
+    char null[CHUNK_SIZE];
 
     assert(job.num_need == 0);
 
-    fdout = open(config.output_file, O_RDWR | O_CREAT | O_TRUNC, DEF_MODE);
-    lseek (fdout, size - 1, SEEK_SET);
-    write (fdout, "", 1);  // write one byte the last position of output file
-    dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
+
+    fdout = fopen(config.output_file, "wb");
+    //fseek (fdout, size - 1, SEEK_SET);
+    //write (fdout, "", 1);  // write one byte the last position of output file
+    //fseek (fdout,0,SEEK_SET);
+    //dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
     for (i = 0; i < num_chk; i++) {
-        fprintf(stderr, "assemble:%s\n",chk_arr[i].data);
-        memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
+        //memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
+        fwrite(chk_arr[i].data,CHUNK_SIZE,1,fdout);
+        //memcpy(null, chk_arr[i].data, CHUNK_SIZE);           
+
     }
-    close(fdout);
-    munmap(dst, size);
+    fprintf(stderr, "cat finished!!!\n");
+    fclose(fdout);
+    //munmap(dst, size);
 }
 
 

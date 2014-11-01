@@ -128,19 +128,19 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
  */
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
-	up_conn_t* conns = pool->connection;
+	up_conn_t** conns = pool->connection;
 	while( i < config.max_conn && pool->flag[i] == 1) {
-		if( conns[i].receiver->id == peer->id) {
-			conns[i].receiver = NULL;
-			free(conns[i].pkt_array);
-			conns[i].pkt_array = NULL;
-			conns[i].l_ack = 0;
-			conns[i].l_available = 1;
-			conns[i].duplicate = 0;
-			conns[i].cwnd = INIT_CWND;
-			conns[i].ssthresh = INIT_SSTHRESH;
+		if( conns[i]->receiver->id == peer->id) {
+			conns[i]->receiver = NULL;
+			free(conns[i]->pkt_array);
+			conns[i]->pkt_array = NULL;
+			conns[i]->l_ack = 0;
+			conns[i]->l_available = 1;
+			conns[i]->duplicate = 0;
+			conns[i]->cwnd = INIT_CWND;
+			conns[i]->ssthresh = INIT_SSTHRESH;
 			pool->flag[i] = 0;
-			pool->num--;
+			(pool->num)--;
 			break;
 		}
 		i++;
@@ -154,16 +154,16 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
  */
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
-	down_conn_t* conns = pool->connection;
+	down_conn_t** conns = pool->connection;
 	while( i < config.max_conn && pool->flag[i] == 1 ) {
-		if(conns[i].provider->id == peer->id) {
-			if(dequeue(conns[i].get_queue) != NULL ) {
+		if(conns[i]->provider->id == peer->id) {
+			if(dequeue(conns[i]->get_queue) != NULL ) {
 				// This should never happen!
 				fprintf(stderr, "downloading connection pool error!\n");
 			}
-			conns[i].provider = NULL;
-			conns[i].chunks = NULL;
-			conns[i].get_queue = NULL;
+			conns[i]->provider = NULL;
+			conns[i]->chunks = NULL;
+			conns[i]->get_queue = NULL;
 			pool->flag[i] = 0;
 			pool->num--;
 			break;

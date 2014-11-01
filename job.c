@@ -55,11 +55,20 @@ int init_job(char* chunkFile, char* output_file) {
 
     gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
+    
     // successfully initilize job
     return 0;
 }
 
-int isFinished() {
+void clear_job() {
+    job.num_chunk = 0; 
+    job.num_need  = 0;
+    struct timeval start_time;
+    job.cwnd = NULL;
+    job.chunks = NULL;
+}
+
+int is_job_finished() {
     return job.num_need == 0;    
 }
 

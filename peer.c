@@ -87,6 +87,7 @@ void process_inbound_udp(int sock) {
     switch(packet_type) {
         // case WhoHas
         case PKT_WHOHAS: {
+            fprintf(stderr, "receive whoHash pkt!!!!\n");
             // Construct I have response pkt
             data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
             if( pkt != NULL) {
@@ -131,12 +132,6 @@ void process_inbound_udp(int sock) {
                 }
             } else {
                 fprintf(stderr, "update!\n");
-                // a connection already exist! update it
-                update_up_conn(up_conn,peer,(data_packet_t*)buf);
-                // send first data
-                print_pkt((data_packet_t*)(up_conn->pkt_array[0]));
-
-                up_conn_recur_send(up_conn, (struct sockaddr*) &from);
             }
             break;
         }
@@ -167,6 +162,10 @@ void process_inbound_udp(int sock) {
                         cat_chunks();
                         // remove this download connection
                         de_down_pool(&down_pool,peer);
+                        // job finished
+                        if(is_job_finished()) {
+                            clear_job();
+                        }
                     } else {
                         fprintf(stderr, "send next get!\n");
                         // update down_conn
@@ -191,8 +190,13 @@ void process_inbound_udp(int sock) {
             // continue send data pkt if not finished
             up_conn = get_up_conn(&up_pool,peer);
             // check ACK
-            if( up_conn->l_ack+1 == ((data_packet_t*)buf)->header.ack_num) {
-                up_conn->l_ack++;
+            if( ((data_packet_t*)buf)->header.ack_num == 512) {
+                // downloading finished
+                de_up_pool(&up_pool,peer);
+            } else if( up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
+                // valid ack
+                up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
+
                 if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;

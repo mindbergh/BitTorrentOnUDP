@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/time.h>
 
 #define BT_FILENAME_LEN 255
 #define BT_MAX_PEERS 1024
@@ -33,6 +34,7 @@ struct bt_config_s {
   int   max_conn;
   short identity;
   unsigned short myport;
+  struct timeval start_time;
   int sock;
   int argc; 
   char **argv;

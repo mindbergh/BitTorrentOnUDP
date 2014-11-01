@@ -52,7 +52,6 @@ typedef struct chunk_s {
 typedef struct job_s {
     int num_chunk;   
     int num_need;
-    struct timeval start_time;
     FILE *cwnd;
     chunk_t* chunks;
 } job_t;
@@ -97,5 +96,6 @@ void print_pkt(data_packet_t* pkt);
 void print_hash(uint8_t *hash);
 void hostToNet(data_packet_t* pkt);
 void netToHost(data_packet_t* pkt);
+
 
 #endif

@@ -33,8 +33,12 @@ test_input_buffer
 # map
 *.map
 
-doc
+# doc
 PROJ2_HOWTO
+*.dat
+
+# dic
+tmp/*
 
 # Old file
 MakefileOld

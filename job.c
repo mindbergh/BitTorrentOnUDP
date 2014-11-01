@@ -5,6 +5,14 @@ extern bt_config_t config;
 extern job_t job;
 extern queue_t* hasChunk;
 
+
+static const char *type2str[] = { "WHOHAS",
+                                  "IHAVE",
+                                  "GET",
+                                  "DATA",
+                                  "ACK",
+                                  "DENIED" };
+
 /** @brief Initilize a job
  *  @param The address of the file which contains chunk id and hash code
  *  @return 0 if job initilization is successed
@@ -53,7 +61,7 @@ int init_job(char* chunkFile, char* output_file) {
     strcpy(config.output_file,output_file);
     config.output_file[strlen(output_file)] = '\0';
 
-    gettimeofday(&(job.start_time), NULL);
+    //gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
     
     // successfully initilize job
@@ -406,7 +414,7 @@ void Send_WhoHas(data_packet_t* pkt) {
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
     if (VERBOSE)
-        fprintf(stderr, "send pkt!*********\n");
+        fprintf(stderr, "send %s pkt!*********\n",  type2str[pkt->header.packet_type]);
     print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
@@ -536,6 +544,7 @@ void print_pkt(data_packet_t* pkt) {
     fprintf(stderr, ">>>>>>>>>END<<<<<<<<<<<<<\n");
 }
 
+
 /** @brief Print out hash
  *  @param hash the pointer to the hash to be printed out
  *  @return void
@@ -550,9 +559,9 @@ void print_hash(uint8_t *hash) {
     fprintf(stderr, "\n");
 }
 
-void freeJob() {
 
-    
+
+void freeJob() {    
     /* free each chunks */
     free(job.chunks);
     job.chunks = NULL;

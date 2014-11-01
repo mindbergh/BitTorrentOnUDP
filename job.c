@@ -1,5 +1,4 @@
 #include "job.h"
-#include <time.h>
 
 
 extern bt_config_t config;
@@ -20,6 +19,7 @@ int init_job(char* chunkFile, char* output_file) {
     int i = 0;
     char read_buffer[BUF_SIZE];
     char hash_buffer[SHA1_HASH_SIZE*2];
+
     
     /* get chunks number */
     while (fgets(read_buffer, BUF_SIZE,file)) {
@@ -53,7 +53,7 @@ int init_job(char* chunkFile, char* output_file) {
     strcpy(config.output_file,output_file);
     config.output_file[strlen(output_file)] = '\0';
 
-    job.start_time = time(NULL);
+    gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
     // successfully initilize job
     return 0;

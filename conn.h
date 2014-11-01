@@ -1,12 +1,12 @@
 #ifndef _CONN_H
 #define _CONN_H
 
-#include "sha.h"
 #include "bt_parse.h"
 #include "queue.h"
 #include "chunk.h"
 #include "sha.h"
 #include "job.h"
+#include "timer.h"
 
 #define INIT_CWND     8   // initial window size   
 #define INIT_SSTHRESH 64  // initial thresh size

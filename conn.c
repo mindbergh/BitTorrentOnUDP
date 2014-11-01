@@ -1,6 +1,5 @@
 #include "bt_parse.h"
 #include "job.h"
-#include "time.h"
 #include "queue.h"
 #include "conn.h"
 
@@ -252,11 +251,11 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 }
 
 void print_cwnd(up_conn_t *conn) {
-	time_t now;
-	time(&now);
+	double elapsed;
 	job.cwnd = fopen("./cwnd.dat", "a+");
-	int elapsed = difftime(now,job.start_time);
-	fprintf(stderr, "f%d\t%f\t%d\n", conn->receiver->id, conn->cwnd, elapsed);
+	//int elapsed = difftime(now,job.start_time);
+	elapsed = get_time_diff(&job.start_time);
+	fprintf(stderr, "f%d\t%f\t%ld\n", conn->receiver->id, conn->cwnd, elapsed);
 	fclose(job.cwnd);
 	//fprintf(job.cwnd, "123");
 }

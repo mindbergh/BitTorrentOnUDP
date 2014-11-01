@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <time.h>
+#include "timer.h"
 #include "spiffy.h"
 
 #define PACKETLEN       1500
@@ -52,7 +52,7 @@ typedef struct chunk_s {
 typedef struct job_s {
     int num_chunk;   
     int num_need;
-    time_t start_time;
+    struct timeval start_time;
     FILE *cwnd;
     chunk_t* chunks;
 } job_t;

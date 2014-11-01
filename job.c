@@ -1,5 +1,5 @@
 #include "job.h"
-
+#include <time.h>
 
 
 extern bt_config_t config;
@@ -11,7 +11,7 @@ extern queue_t* hasChunk;
  *  @return 0 if job initilization is successed
  *          1 if failed
  */
-int init_job(char* chunkFile) {
+int init_job(char* chunkFile, char* output_file) {
     FILE* file = fopen(chunkFile,"r");
     if( file == NULL)
         return -1; // fail to open job file
@@ -48,8 +48,13 @@ int init_job(char* chunkFile) {
         i++;
     }    
     fclose(file);
+
+    // set output file address and format
+    strcpy(config.output_file,output_file);
+    config.output_file[strlen(output_file)] = '\0';
+
     job.start_time = time(NULL);
-    job.cwnd = fopen("./cwnd.dat", "w");
+    //fprintf(job.cwnd, "Start!\n");
     // successfully initilize job
     return 0;
 }

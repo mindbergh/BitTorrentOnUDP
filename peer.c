@@ -198,7 +198,7 @@ void process_inbound_udp(int sock) {
                     up_conn->cwnd += 1;
                     if (VERBOSE)
                         print_cwnd(up_conn);
-                    up_conn_recur_send(up_conn,(struct sockaddr*) &from);
+                        up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 } else {
                     // congestion avoidence state
                     up_conn->cwnd += 1/up_conn->cwnd;
@@ -244,7 +244,7 @@ void process_get(char *chunkfile, char *outputfile) {
     printf("PROCESS GET SKELETON CODE CALLED.  Fill me in!  (%s, %s)\n",
     chunkfile, outputfile);
     /* Create a Job */
-    init_job(chunkfile);
+    init_job(chunkfile,outputfile);
 
     /* call whohasmaker */
     queue_t* whoHasQueue = WhoHas_maker();

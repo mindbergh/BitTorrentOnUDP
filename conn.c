@@ -252,6 +252,11 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 }
 
 void print_cwnd(up_conn_t *conn) {
-	time_t now = time(NULL);
-	fprint(job.cwnd, "f%d\t%f\t%ld\n", conn->receive.id, conn->cwnd, now - job.start_time);
+	time_t now;
+	time(&now);
+	job.cwnd = fopen("./cwnd.dat", "a+");
+	int elapsed = difftime(now,job.start_time);
+	fprintf(stderr, "f%d\t%f\t%d\n", conn->receiver->id, conn->cwnd, elapsed);
+	fclose(job.cwnd);
+	//fprintf(job.cwnd, "123");
 }

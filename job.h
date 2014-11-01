@@ -72,7 +72,7 @@ typedef struct data_packet {
     char data[DATALEN];
 } data_packet_t;
 
-int init_job(char* chunkFile);
+int init_job(char* chunkFile, char* output_file);
 int isFinished();
 int IfIHave(uint8_t *hash_start);
 int packet_parser(char* buf);

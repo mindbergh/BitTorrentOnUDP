@@ -157,7 +157,7 @@ void process_inbound_udp(int sock) {
                     
                     fprintf(stderr, "finished!\n");
                     job.num_need--;
-                    dequeue(down_conn->get_queue);   // to do free
+                    dequeue(down_conn->get_queue); // to do free
                     dequeue(down_conn->chunks); // to do free
 
                     // check current downloading connection finished

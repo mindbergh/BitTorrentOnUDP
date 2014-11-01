@@ -44,11 +44,11 @@ typedef struct up_pool_s {
 void init_down_pool(down_pool_t* pool);
 void init_up_pool(up_pool_t* pool);
 void init_down_conn(down_conn_t** conn, bt_peer_t* provider, 
-	chunk_t* chunk, queue_t* get_queue);
+	queue_t* chunk, queue_t* get_queue);
 void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,  
 	data_packet_t** pkt_array);
 down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider, 
-	chunk_t* chunk, queue_t* get_queue);
+	queue_t* chunk, queue_t* get_queue);
 up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,  
 	data_packet_t** pkt_array);
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer);

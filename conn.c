@@ -35,6 +35,7 @@ void init_up_pool(up_pool_t* pool) {
 	while(i < max) {
 		flags[i++] = 0;
 	}
+	fprintf(stderr, "%f\n", job.cwnd);
 }
 
 /** @brief Initilize a downloading connection
@@ -251,11 +252,11 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 }
 
 void print_cwnd(up_conn_t *conn) {
-	double elapsed;
-	job.cwnd = fopen("./cwnd.dat", "a+");
-	//int elapsed = difftime(now,job.start_time);
-	elapsed = get_time_diff(&job.start_time);
-	fprintf(stderr, "f%d\t%f\t%ld\n", conn->receiver->id, conn->cwnd, elapsed);
-	fclose(job.cwnd);
-	//fprintf(job.cwnd, "123");
+    double elapsed;
+    //job.cwnd = fopen("./cwnd.dat", "a+");
+    //int elapsed = difftime(now,job.start_time);
+    elapsed = get_time_diff(&(config.start_time));
+    fprintf(stderr, "f%d\t%f\t%lf\n", conn->receiver->id, conn->cwnd, elapsed);
+    //fclose(job.cwnd);
+    //fprintf(job.cwnd, "123");
 }

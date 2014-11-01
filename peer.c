@@ -193,6 +193,7 @@ void process_inbound_udp(int sock) {
             // check ACK
             if( up_conn->l_ack+1 == ((data_packet_t*)buf)->header.ack_num) {
                 up_conn->l_ack++;
+                fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
                 if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                     // slow start state
                     up_conn->cwnd += 1;
@@ -280,6 +281,7 @@ void peer_run() {
     struct sockaddr_in myaddr;
     fd_set readfds;
     struct user_iobuf *userbuf;
+    int yes = 1;
 
     if ((userbuf = create_userbuf()) == NULL) {
         perror("peer_run could not allocate userbuf");
@@ -290,7 +292,7 @@ void peer_run() {
         perror("peer_run could not create socket");
         exit(-1);
     }
-
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
     bzero(&myaddr, sizeof(myaddr));
     myaddr.sin_family = AF_INET;
     //myaddr.sin_addr.s_addr = htonl(INADDR_ANY);

@@ -363,7 +363,7 @@ void peer_run() {
                     fprintf(stderr, "About to check living\n");
                 check_living();
                 if (VERBOSE)
-                    fprintf(stderr, "Finish check living\n", );
+                    fprintf(stderr, "Finish check living\n" );
             }
         }
     }

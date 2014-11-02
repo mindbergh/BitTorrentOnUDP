@@ -60,7 +60,7 @@ int init_job(char* chunkFile, char* output_file) {
     strcpy(config.output_file,output_file);
     strcpy(job.get_chunk_file,chunkFile);
     config.output_file[strlen(output_file)] = '\0';
-    job.get_chunk_file[strlen(job.chunkFile)] = '\0';r
+    job.get_chunk_file[strlen(job.get_chunk_file)] = '\0';
 
     //gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");

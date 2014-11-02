@@ -253,10 +253,10 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 
 void print_cwnd(up_conn_t *conn) {
     double elapsed;
-    job.cwnd = fopen("./problem2-peer.txt", "a+");
+    //job.cwnd = fopen("./problem2-peer.txt", "a+");
     //int elapsed = difftime(now,job.start_time);
     elapsed = get_time_diff(&(config.start_time));
-    fprintf(job.cwnd, "f%d\t%d\t%d\n", conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
-    fclose(job.cwnd);
+    //fprintf(job.cwnd, "f%d\t%d\t%d\n", conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
+    //fclose(job.cwnd);
     //fprintf(job.cwnd, "123");
 }

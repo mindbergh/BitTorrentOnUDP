@@ -103,13 +103,20 @@ void process_inbound_udp(int sock) {
             // Construct Get Pkt response 
             queue_t* chunk_queue = queue_init();
             queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf,peer,chunk_queue);
-            // add new downloading connection
-            if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
-                // downloading connection pool is full!
-                fprintf(stderr, "downloading connection pool is full!\n");
+            // check if needed to create new download connection
+            if( get_Pkt_Queue->n == 0) {
+                // no need!
+                free(chunk_queue);
+                free(get_Pkt_Queue);
             } else {
-                // send out first GET packets 
-                packet_sender((data_packet_t*)(down_conn->get_queue->head->data),(struct sockaddr*) &from);
+                // add new downloading connection
+                if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
+                    // downloading connection pool is full!
+                    fprintf(stderr, "downloading connection pool is full!\n");
+                } else {
+                    // send out first GET packets 
+                    packet_sender((data_packet_t*)(down_conn->get_queue->head->data),(struct sockaddr*) &from);
+                }
             }
             break;
         }

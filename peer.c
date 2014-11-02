@@ -68,11 +68,13 @@ int main(int argc, char **argv) {
 
 void process_inbound_udp(int sock) {
     int packet_type = -1;
+    int i;
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
     up_conn_t* up_conn;
     down_conn_t* down_conn;
+    struct timeval* last_time;
 
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
@@ -184,6 +186,7 @@ void process_inbound_udp(int sock) {
                 // send ACK pkt
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
             }
+            gettimeofday(&(down_conn->last_time), NULL);  // update last alive time
             break;
         }
         case PKT_ACK: {
@@ -232,6 +235,15 @@ void process_inbound_udp(int sock) {
             // Invalid packet
             fprintf(stderr,"Invalid Packet:%d!\n", packet_type);
             break;
+        }   
+    }
+
+    for (i = 0; i < config.max_conn; i++) {
+        if (down_pool.flag[i] != 1) continue;
+        last_time = &(down_pool.connection[i]->last_time);
+        if (get_time_diff(last_time) > 10) {
+            // to do, this conn is timed out
+            // reflood whohas to the associated chunk(s)
         }
     }
 

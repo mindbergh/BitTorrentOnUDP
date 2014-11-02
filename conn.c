@@ -51,6 +51,7 @@ void init_down_conn(down_conn_t** conn, bt_peer_t* provider,
 	(*conn)->chunks = chunk;
 	(*conn)->get_queue = get_queue;
 	(*conn)->next_pkt = 1;
+	gettimeofday(&((*conn)->last_time), NULL); // initial time
 }
 
 /** @brief Initilize a uploading connection

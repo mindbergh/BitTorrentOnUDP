@@ -15,6 +15,7 @@ typedef struct down_conn_s {
 	bt_peer_t* provider;
 	queue_t* chunks;
 	queue_t* get_queue;
+	struct timeval last_time;
 	int next_pkt; // next expected pkt number
 }down_conn_t;
 

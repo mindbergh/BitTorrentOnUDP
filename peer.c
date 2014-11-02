@@ -237,12 +237,15 @@ void process_inbound_udp(int sock) {
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
                     up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
+                    int old_cwnd = up_conn->cwnd;
                     up_conn->cwnd = 1;
                     up_conn->l_available = up_conn->l_ack+1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                     up_conn->duplicate = 0;
-                    if (VERBOSE)
-                        print_cwnd(up_conn);
+                    if (VERBOSE) {
+                        if ((int)old_cwnd != up_conn->cwnd)
+                            print_cwnd(up_conn);
+                    }
                 }
             }
             break;

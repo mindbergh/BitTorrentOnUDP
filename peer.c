@@ -68,13 +68,14 @@ int main(int argc, char **argv) {
 
 void process_inbound_udp(int sock) {
     int packet_type = -1;
-    int i;
+    int i, reflood_flag = 0;
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
     up_conn_t* up_conn;
     down_conn_t* down_conn;
     struct timeval* last_time;
+    void *ptr;
 
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
@@ -103,7 +104,7 @@ void process_inbound_udp(int sock) {
             queue_t* chunk_queue = queue_init();
             queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf,peer,chunk_queue);
             // add new downloading connection
-            if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
+            if((down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
                 // downloading connection pool is full!
                 fprintf(stderr, "downloading connection pool is full!\n");
             } else {
@@ -159,9 +160,9 @@ void process_inbound_udp(int sock) {
                     
                     fprintf(stderr, "finished!\n");
                     job.num_need--;
-                    dequeue(down_conn->get_queue); // to do free
+                    ptr = dequeue(down_conn->get_queue); // to do free
+                    //free(ptr);
                     dequeue(down_conn->chunks); // to do free
-
                     // check current downloading connection finished
                     if(down_conn->get_queue->head == NULL) {
                         fprintf(stderr, "all get finished!!!\n");
@@ -239,14 +240,23 @@ void process_inbound_udp(int sock) {
     }
 
     for (i = 0; i < config.max_conn; i++) {
-        if (down_pool.flag[i] != 1) continue;
-        last_time = &(down_pool.connection[i]->last_time);
+        if (down_pool.flag[i] == 0) continue; // unused conn slot
+        down_conn = down_pool.connection[i];
+        last_time = &(down_conn->last_time);
         if (get_time_diff(last_time) > 10) {
+            while ((ptr = dequeue(down_conn->chunks)) != NULL) {
+                ((chunk_t*)ptr)->pvd = NULL; // this chunk's pvd is dead
+                job.num_living &= (^(1 << ((chunk_t*)ptr)->id)); // this chunk is dead
+                reflood_flag = 1; // need
+            }
+            de_down_pool(&down_pool, down_conn->provider);           
             // to do, this conn is timed out
             // reflood whohas to the associated chunk(s)
         }
     }
 
+    if (reflood_flag)
+        flood_WhoHas();
     /*printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
            "Incoming message from %s:%d\n\n",
             inet_ntoa(from.sin_addr),
@@ -265,7 +275,7 @@ void process_get(char *chunkfile, char *outputfile) {
     data_packet_t* cur_pkt = NULL;
     while((cur_pkt = (data_packet_t *)dequeue(whoHasQueue)) != NULL) {
         //fprintf(stderr, "here\n");
-        Send_WhoHas(cur_pkt);
+        send_WhoHas(cur_pkt);
         packet_free(cur_pkt);
     }
     
@@ -294,6 +304,10 @@ void peer_run() {
     fd_set readfds;
     struct user_iobuf *userbuf;
     int yes = 1;
+    struct timeval tv;
+
+    
+
 
     if ((userbuf = create_userbuf()) == NULL) {
         perror("peer_run could not allocate userbuf");
@@ -327,7 +341,10 @@ void peer_run() {
         int nfds;
         FD_SET(STDIN_FILENO, &readfds);
         FD_SET(sock, &readfds);
-        nfds = select(sock+1, &readfds, NULL, NULL, NULL);
+        
+        tv.tv_sec = 10; /* Wait up to 10 seconds. */
+        tv.tv_usec = 0;
+        nfds = select(sock+1, &readfds, NULL, NULL, tv);
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
                  process_inbound_udp(sock);
@@ -336,6 +353,14 @@ void peer_run() {
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");
             }
+        } else {
+            // timeout and try to reflood
+            if (VERBOSE)
+                fprintf(stderr, "Select timed out!!\n");
+            if (isFinished())
+                continue;  // no job pending
+            else 
+                flood_WhoHas();
         }
     }
 }

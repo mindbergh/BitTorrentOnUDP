@@ -37,6 +37,7 @@ int init_job(char* chunkFile, char* output_file) {
     
     job.num_chunk = line_number;
     job.num_need = line_number;
+    job.num_living = 0;
     job.chunks = malloc(sizeof(chunk_t) * job.num_chunk);
     
     /* set ptr to the beginning */
@@ -196,14 +197,14 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
  *          0 if I dont have any one
  */
 int IfIHave(uint8_t *hash_start) {
-    int i;
+    int i, num;
     node_t *node;
     chunk_t* this_chunk;
     if (hasChunk->n == 0)
         return 0;
     node = hasChunk->head;
-    for (i = 0; i < hasChunk->n; i++) {
-        //print_hash((uint8_t *)node->data);
+    num = hasChunk->n;
+    for (i = 0; i < num; i++) {
         this_chunk = (chunk_t *)node->data;
         if (memcmp(hash_start, this_chunk->hash, SHA1_HASH_SIZE)) {
             node = node->next;
@@ -242,6 +243,7 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
         if (-1 != match_id) {
             chk[i].pvd = provider;
             chk[i].num_p = 1;
+            job.num_living |= (1 << i);   // the ith chunks is living
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
             enqueue(chunk_queue,(void*)(chk+i));
@@ -383,7 +385,7 @@ data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char 
  *  @param pkt pkt to be send
  *  @return void
  */
-void Send_WhoHas(data_packet_t* pkt) {
+void send_WhoHas(data_packet_t* pkt) {
     char str[20];
     struct bt_peer_s* peer = config.peers;
 
@@ -400,6 +402,24 @@ void Send_WhoHas(data_packet_t* pkt) {
     }
 }
 
+
+void flood_WhoHas() {
+    if (job.num_living == ((1 << (job.num_chk + 1)) - 1)) {
+        if (VERBOSE)
+            fprintf(stderr, "All chunks are living!\n");
+        return;
+    }
+    /* call whohasmaker */
+    queue_t* whoHasQueue = WhoHas_maker();
+    /* send out all whohas packets */
+    data_packet_t* cur_pkt = NULL;
+    while((cur_pkt = (data_packet_t *)dequeue(whoHasQueue)) != NULL) {
+        //fprintf(stderr, "here\n");
+        send_WhoHas(cur_pkt);
+        packet_free(cur_pkt);
+    }
+    free_queue(whoHasQueue);
+}
 
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {

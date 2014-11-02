@@ -35,7 +35,7 @@ void init_up_pool(up_pool_t* pool) {
 	while(i < max) {
 		flags[i++] = 0;
 	}
-	fprintf(stderr, "%f\n", job.cwnd);
+	//fprintf(stderr, "%f\n", job.cwnd);
 }
 
 /** @brief Initilize a downloading connection

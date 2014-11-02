@@ -70,7 +70,6 @@ int init_job(char* chunkFile, char* output_file) {
 void clear_job() {
     job.num_chunk = 0; 
     job.num_need  = 0;
-    struct timeval start_time;
     job.cwnd = NULL;
     job.chunks = NULL;
 }
@@ -247,13 +246,13 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
     hash = (uint8_t *)(ihave_pkt->data + 4); // the start of hash
     for (i = 0; i < num; i++) {
         match_idx = match_need(hash);
-        if (-1 != match_id) {
+        if (-1 != match_idx) {
             chk[match_idx].pvd = provider;
             chk[match_idx].num_p = 1;
-            job.num_living |= (1 << match_idx);   // this chunks is living
+            //job.num_living |= (1 << match_idx);   // this chunks is living
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
-            enqueue(chunk_queue,(void*)(chk+match_id));
+            enqueue(chunk_queue,(void*)(chk+match_idx));
         }
         hash += SHA1_HASH_SIZE;
     }
@@ -270,9 +269,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
     int index = 0, i = 0;
     char hash_buffer[HASH_HEX_SIZE] = {0};
     char hash_hex[HASH_HEX_SIZE] = {0};
-    uint8_t chunk_hash[SHA1_HASH_SIZE];
     char buffer[BT_FILENAME_LEN+5] = {0};
-    char data_buffer[1024] = {0};
     char datafile[BT_FILENAME_LEN] = {0};
     char index_buffer[5] = {0};
     char *src;
@@ -411,7 +408,7 @@ void send_WhoHas(data_packet_t* pkt) {
 
 
 void flood_WhoHas() {
-    if (job.num_living == ((1 << (job.num_chk + 1)) - 1)) {
+    if (job.num_living == ((1 << (job.num_chunk + 1)) - 1)) {
         if (VERBOSE)
             fprintf(stderr, "All chunks are living!\n");
         return;
@@ -431,8 +428,9 @@ void flood_WhoHas() {
 
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
+    int type = pkt->header.packet_type;
     if (VERBOSE)
-        fprintf(stderr, "send %s pkt!*********\n",  type2str[pkt->header.packet_type]);
+        fprintf(stderr, "send %s pkt!*********\n", type2str[type]);
     print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
@@ -448,7 +446,6 @@ void store_data(chunk_t* chunk, data_packet_t* pkt) {
 
 void cat_chunks() {
     FILE* fdout;
-    char *dst;
     int i;
     int num_chk = job.num_chunk;
     int size = num_chk * CHUNK_SIZE;
@@ -458,19 +455,11 @@ void cat_chunks() {
 
 
     fdout = fopen(config.output_file, "w");
-    //fseek (fdout, size - 1, SEEK_SET);
-    //write (fdout, "", 1);  // write one byte the last position of output file
-    //fseek (fdout,0,SEEK_SET);
-    //dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
     for (i = 0; i < num_chk; i++) {
-        //memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
         fwrite(chk_arr[i].data,1,CHUNK_SIZE,fdout);
-        //memcpy(null, chk_arr[i].data, CHUNK_SIZE);           
-
     }
     fprintf(stderr, "cat finished!!!\n");
     fclose(fdout);
-    //munmap(dst, size);
 }
 
 

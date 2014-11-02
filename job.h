@@ -99,6 +99,7 @@ void print_pkt(data_packet_t* pkt);
 void print_hash(uint8_t *hash);
 void hostToNet(data_packet_t* pkt);
 void netToHost(data_packet_t* pkt);
+void clear_job();
 
 
 #endif

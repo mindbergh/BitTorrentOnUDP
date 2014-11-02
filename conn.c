@@ -94,7 +94,7 @@ queue_t* chunk, queue_t* get_queue) {
 	init_down_conn(&(pool->connection[i]),provider,chunk, get_queue);
 	pool->flag[i] = 1;
 	pool->num++;
-	int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
+	//int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
 	return pool->connection[i];
 }
 
@@ -232,7 +232,7 @@ void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
  */
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	// construct new data pkt array
-	data_packet_t* data_pkt_array = DATA_pkt_array_maker(get_pkt);
+	data_packet_t** data_pkt_array = DATA_pkt_array_maker(get_pkt);
 	conn->receiver = peer;
 	conn->pkt_array = data_pkt_array;
 	conn->l_ack = 0;

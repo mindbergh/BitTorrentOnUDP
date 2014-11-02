@@ -139,6 +139,7 @@ void process_inbound_udp(int sock) {
         case PKT_DATA: {
             fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
             down_conn = get_down_conn(&down_pool,peer);
+            //fprintf(stderr, "current downloading chunk id:%d\n",((chunk_t*)(down_conn->chunks->head->data))->id);
             // check ack number 
             if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
                 // store data
@@ -154,24 +155,27 @@ void process_inbound_udp(int sock) {
                     job.num_need--;
                     dequeue(down_conn->get_queue); // to do free
                     dequeue(down_conn->chunks); // to do free
-
-                    // check current downloading connection finished
-                    if(down_conn->get_queue->head == NULL) {
-                        fprintf(stderr, "all get finished!!!\n");
-                        // all finished， cat all chunks into one file
-                        cat_chunks();
-                        // remove this download connection
-                        de_down_pool(&down_pool,peer);
-                        // job finished
-                        if(is_job_finished()) {
-                            clear_job();
-                        }
-                    } else {
+ 
+                    if(down_conn->get_queue->head != NULL) {
                         fprintf(stderr, "send next get!\n");
                         // update down_conn
                         update_down_conn(down_conn,peer);
                         // send out next GET packets 
                         packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
+                    } else if( down_conn->get_queue->head == NULL) {
+                        // remove this download connection
+                        fprintf(stderr, "remove current download connection\n");
+                        de_down_pool(&down_pool,peer);
+                    }
+                    // check current downloading connection finished
+                    if(job.num_need == 0) {
+                        fprintf(stderr, "all get finished!!!\n");
+                        // all finished， cat all chunks into one file
+                        cat_chunks();
+                        // job finished
+                        if(is_job_finished()) {
+                            clear_job();
+                        }
                     }
                 }
 
@@ -205,9 +209,12 @@ void process_inbound_udp(int sock) {
                         up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 } else {
                     // congestion avoidence state
+                    int old_cwnd = up_conn->cwnd;
                     up_conn->cwnd += 1/up_conn->cwnd;
-                    if (VERBOSE)
-                        print_cwnd(up_conn);
+                    if (VERBOSE) {
+                        if((int)old_cwnd + 1 == (int)up_conn->cwnd )
+                            print_cwnd(up_conn);
+                    }    
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 }
             } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {

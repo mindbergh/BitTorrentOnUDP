@@ -44,7 +44,6 @@ int init_job(char* chunkFile, char* output_file) {
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
         sscanf(read_buffer,"%d %s",&(job.chunks[i].id),hash_buffer);
-        
         /* convert ascii to binary hash code */
         hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);        
         memset(read_buffer,0,BUF_SIZE);
@@ -56,7 +55,6 @@ int init_job(char* chunkFile, char* output_file) {
         i++;
     }    
     fclose(file);
-
     // set output file address and format
     strcpy(config.output_file,output_file);
     config.output_file[strlen(output_file)] = '\0';
@@ -249,11 +247,11 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
     for (i = 0; i < num; i++) {
         match_id = match_need(hash);
         if (-1 != match_id) {
-            chk[i].pvd = provider;
-            chk[i].num_p = 1;
+            chk[match_id].pvd = provider;
+            chk[match_id].num_p = 1;
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
-            enqueue(chunk_queue,(void*)(chk+i));
+            enqueue(chunk_queue,(void*)(chk+match_id));
         }
         hash += SHA1_HASH_SIZE;
     }

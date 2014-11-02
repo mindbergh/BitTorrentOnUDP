@@ -1,0 +1,38 @@
+################################################################################
+# TESTS                                                                        #
+#                                                                              #
+# Description: This file describes the test methods for proj2-cp1              #
+#                                                                              #
+# Authors: Ming Fang <mingf@cs.cmu.edu>, Yao Zhou <yaozhou@cs.cmu.edu>         #
+#                                                                              #
+################################################################################
+
+
+
+[TOC-1] Table of Contents
+--------------------------------------------------------------------------------
+
+        [TOC-1] Table of Contents
+        [CKP-1] Description of Test Cases for Checkpoint 1
+
+
+[CKP-1] Description of Test Cases for Checkpoint 1
+--------------------------------------------------------------------------------
+
+1. Test for packet generation
+Peers implement a function called print_pkt, which takes data_packet_t pointer
+and print out human-readable header information.
+
+2. Test for WHOHAS
+Set up the network environment, feed one peer with GET command and print out 
+the sent WHOHAS packet on the other peers
+
+3. Test for IHAVE
+Set up the network environment, feed one peer with GET command and print out 
+the received IHAVE responses.
+
+
+
+
+
+

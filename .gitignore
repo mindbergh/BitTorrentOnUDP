@@ -1,0 +1,44 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*.sh
+peer
+make-chunks
+client
+server
+test_debug
+test_input_buffer
+
+
+# map
+*.map
+
+# doc
+PROJ2_HOWTO
+*.dat
+
+# dic
+tmp/*
+
+# Old file
+MakefileOld

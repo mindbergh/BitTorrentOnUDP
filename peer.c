@@ -89,6 +89,7 @@ void process_inbound_udp(int sock) {
     switch(packet_type) {
         // case WhoHas
         case PKT_WHOHAS: {
+            fprintf(stderr, "receive whoHash pkt!!!!\n");
             // Construct I have response pkt
             data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
             if( pkt != NULL) {
@@ -102,13 +103,20 @@ void process_inbound_udp(int sock) {
             // Construct Get Pkt response 
             queue_t* chunk_queue = queue_init();
             queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf,peer,chunk_queue);
-            // add new downloading connection
-            if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
-                // downloading connection pool is full!
-                fprintf(stderr, "downloading connection pool is full!\n");
+            // check if needed to create new download connection
+            if( get_Pkt_Queue->n == 0) {
+                // no need!
+                free(chunk_queue);
+                free(get_Pkt_Queue);
             } else {
-                // send out first GET packets 
-                packet_sender((data_packet_t*)(down_conn->get_queue->head->data),(struct sockaddr*) &from);
+                // add new downloading connection
+                if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
+                    // downloading connection pool is full!
+                    fprintf(stderr, "downloading connection pool is full!\n");
+                } else {
+                    // send out first GET packets 
+                    packet_sender((data_packet_t*)(down_conn->get_queue->head->data),(struct sockaddr*) &from);
+                }
             }
             break;
         }
@@ -133,12 +141,6 @@ void process_inbound_udp(int sock) {
                 }
             } else {
                 fprintf(stderr, "update!\n");
-                // a connection already exist! update it
-                update_up_conn(up_conn,peer,(data_packet_t*)buf);
-                // send first data
-                print_pkt((data_packet_t*)(up_conn->pkt_array[0]));
-
-                up_conn_recur_send(up_conn, (struct sockaddr*) &from);
             }
             break;
         }
@@ -146,6 +148,7 @@ void process_inbound_udp(int sock) {
         case PKT_DATA: {
             fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
             down_conn = get_down_conn(&down_pool,peer);
+            //fprintf(stderr, "current downloading chunk id:%d\n",((chunk_t*)(down_conn->chunks->head->data))->id);
             // check ack number 
             if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
                 // store data
@@ -161,20 +164,27 @@ void process_inbound_udp(int sock) {
                     job.num_need--;
                     dequeue(down_conn->get_queue); // to do free
                     dequeue(down_conn->chunks); // to do free
-
-                    // check current downloading connection finished
-                    if(down_conn->get_queue->head == NULL) {
-                        fprintf(stderr, "all get finished!!!\n");
-                        // all finished， cat all chunks into one file
-                        cat_chunks();
-                        // remove this download connection
-                        de_down_pool(&down_pool,peer);
-                    } else {
+ 
+                    if(down_conn->get_queue->head != NULL) {
                         fprintf(stderr, "send next get!\n");
                         // update down_conn
                         update_down_conn(down_conn,peer);
                         // send out next GET packets 
                         packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
+                    } else if( down_conn->get_queue->head == NULL) {
+                        // remove this download connection
+                        fprintf(stderr, "remove current download connection\n");
+                        de_down_pool(&down_pool,peer);
+                    }
+                    // check current downloading connection finished
+                    if(job.num_need == 0) {
+                        fprintf(stderr, "all get finished!!!\n");
+                        // all finished， cat all chunks into one file
+                        cat_chunks();
+                        // job finished
+                        if(is_job_finished()) {
+                            clear_job();
+                        }
                     }
                 }
 
@@ -194,8 +204,12 @@ void process_inbound_udp(int sock) {
             // continue send data pkt if not finished
             up_conn = get_up_conn(&up_pool,peer);
             // check ACK
-            if( up_conn->l_ack+1 == ((data_packet_t*)buf)->header.ack_num) {
-                up_conn->l_ack++;
+            if( ((data_packet_t*)buf)->header.ack_num == 512) {
+                // downloading finished
+                de_up_pool(&up_pool,peer);
+            } else if( up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
+                // valid ack
+                up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
                 fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
                 if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                     // slow start state
@@ -205,9 +219,12 @@ void process_inbound_udp(int sock) {
                         up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 } else {
                     // congestion avoidence state
+                    int old_cwnd = up_conn->cwnd;
                     up_conn->cwnd += 1/up_conn->cwnd;
-                    if (VERBOSE)
-                        print_cwnd(up_conn);
+                    if (VERBOSE) {
+                        if((int)old_cwnd + 1 == (int)up_conn->cwnd )
+                            print_cwnd(up_conn);
+                    }    
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                 }
             } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {

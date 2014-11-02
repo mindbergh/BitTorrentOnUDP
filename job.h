@@ -72,7 +72,7 @@ typedef struct data_packet {
 } data_packet_t;
 
 int init_job(char* chunkFile, char* output_file);
-int isFinished();
+int is_job_finished();
 int IfIHave(uint8_t *hash_start);
 int packet_parser(char* buf);
 void Send_WhoHas(data_packet_t* pkt);

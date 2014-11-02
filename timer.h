@@ -9,7 +9,7 @@
 #include "sha.h"
 #include "job.h"
 
-double get_time_diff(struct timeval* start);
+int get_time_diff(struct timeval* start);
 
 #endif
 

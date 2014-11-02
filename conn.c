@@ -130,19 +130,19 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
  */
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
-	up_conn_t* conns = pool->connection;
-	while( i < config.max_conn && pool->flag[i] == 1) {
-		if( conns[i].receiver->id == peer->id) {
-			conns[i].receiver = NULL;
-			free(conns[i].pkt_array);
-			conns[i].pkt_array = NULL;
-			conns[i].l_ack = 0;
-			conns[i].l_available = 1;
-			conns[i].duplicate = 0;
-			conns[i].cwnd = INIT_CWND;
-			conns[i].ssthresh = INIT_SSTHRESH;
+	up_conn_t** conns = pool->connection;
+	while( i < config.max_conn ) {
+		if( pool->flag[i] == 1 && conns[i]->receiver->id == peer->id) {
+			conns[i]->receiver = NULL;
+			free(conns[i]->pkt_array);
+			conns[i]->pkt_array = NULL;
+			conns[i]->l_ack = 0;
+			conns[i]->l_available = 1;
+			conns[i]->duplicate = 0;
+			conns[i]->cwnd = INIT_CWND;
+			conns[i]->ssthresh = INIT_SSTHRESH;
 			pool->flag[i] = 0;
-			pool->num--;
+			(pool->num)--;
 			break;
 		}
 		i++;
@@ -156,16 +156,16 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
  */
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
-	down_conn_t* conns = pool->connection;
-	while( i < config.max_conn && pool->flag[i] == 1 ) {
-		if(conns[i].provider->id == peer->id) {
-			if(dequeue(conns[i].get_queue) != NULL ) {
+	down_conn_t** conns = pool->connection;
+	while( i < config.max_conn ) {
+		if(pool->flag[i] == 1 && conns[i]->provider->id == peer->id) {
+			if(dequeue(conns[i]->get_queue) != NULL ) {
 				// This should never happen!
 				fprintf(stderr, "downloading connection pool error!\n");
 			}
-			conns[i].provider = NULL;
-			conns[i].chunks = NULL;
-			conns[i].get_queue = NULL;
+			conns[i]->provider = NULL;
+			conns[i]->chunks = NULL;
+			conns[i]->get_queue = NULL;
 			pool->flag[i] = 0;
 			pool->num--;
 			break;
@@ -182,8 +182,8 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	down_conn_t** conns = pool->connection;
-	while( i<= config.max_conn && i < pool->num) {
-		if( conns[i]->provider->id == peer->id && pool->flag[i] == 1) {
+	while( i<= config.max_conn) {
+		if( pool->flag[i] == 1 && conns[i]->provider->id == peer->id) {
 			return conns[i];	
 		}
 		i++;
@@ -200,8 +200,8 @@ down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
 	up_conn_t** conns = pool->connection;
-	while( i<= config.max_conn && i < pool->num ) {
-		if( conns[i]->receiver->id == peer->id && pool->flag[i] == 1) {
+	while( i<= config.max_conn) {
+		if( pool->flag[i] == 1 && conns[i]->receiver->id == peer->id) {
 			return conns[i];	
 		}
 		i++;
@@ -254,10 +254,10 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 
 void print_cwnd(up_conn_t *conn) {
     double elapsed;
-    //job.cwnd = fopen("./cwnd.dat", "a+");
+    //job.cwnd = fopen("./problem2-peer.txt", "a+");
     //int elapsed = difftime(now,job.start_time);
     elapsed = get_time_diff(&(config.start_time));
-    fprintf(stderr, "f%d\t%f\t%lf\n", conn->receiver->id, conn->cwnd, elapsed);
+    //fprintf(job.cwnd, "f%d\t%d\t%d\n", conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
     //fclose(job.cwnd);
     //fprintf(job.cwnd, "123");
 }

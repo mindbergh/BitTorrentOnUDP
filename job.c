@@ -37,10 +37,7 @@ int init_job(char* chunkFile, char* output_file) {
     
     job.num_chunk = line_number;
     job.num_need = line_number;
-<<<<<<< HEAD
     job.num_living = 0;
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     job.chunks = malloc(sizeof(chunk_t) * job.num_chunk);
     
     /* set ptr to the beginning */
@@ -61,13 +58,9 @@ int init_job(char* chunkFile, char* output_file) {
     fclose(file);
     // set output file address and format
     strcpy(config.output_file,output_file);
-<<<<<<< HEAD
     strcpy(job.get_chunk_file,chunkFile);
     config.output_file[strlen(output_file)] = '\0';
     job.get_chunk_file[strlen(job.get_chunk_file)] = '\0';
-=======
-    config.output_file[strlen(output_file)] = '\0';
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 
     //gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
@@ -79,10 +72,6 @@ int init_job(char* chunkFile, char* output_file) {
 void clear_job() {
     job.num_chunk = 0; 
     job.num_need  = 0;
-<<<<<<< HEAD
-=======
-    struct timeval start_time;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     job.cwnd = NULL;
     job.chunks = NULL;
 }
@@ -216,23 +205,14 @@ data_packet_t *IHave_maker(data_packet_t *whohas_pkt) {
  *          0 if I dont have any one
  */
 int IfIHave(uint8_t *hash_start) {
-<<<<<<< HEAD
     int i, num;
-=======
-    int i;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     node_t *node;
     chunk_t* this_chunk;
     if (hasChunk->n == 0)
         return 0;
     node = hasChunk->head;
-<<<<<<< HEAD
     num = hasChunk->n;
     for (i = 0; i < num; i++) {
-=======
-    for (i = 0; i < hasChunk->n; i++) {
-        //print_hash((uint8_t *)node->data);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
         this_chunk = (chunk_t *)node->data;
         if (memcmp(hash_start, this_chunk->hash, SHA1_HASH_SIZE)) {
             node = node->next;
@@ -256,11 +236,7 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
     int num = ihave_pkt->data[0]; // num of chunk that peer has
     //int num_match = 0;
     int i;
-<<<<<<< HEAD
     int match_idx;
-=======
-    int match_id;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     chunk_t* chk = job.chunks;  // the needed chunk here
     queue_t *q;      // the queue of GET request
     data_packet_t* pkt; // GET packet
@@ -271,7 +247,6 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
     q = queue_init();
     hash = (uint8_t *)(ihave_pkt->data + 4); // the start of hash
     for (i = 0; i < num; i++) {
-<<<<<<< HEAD
         match_idx = match_need(hash);
         if (-1 != match_idx) {
             chk[match_idx].pvd = provider;
@@ -280,15 +255,6 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
             enqueue(chunk_queue,(void*)(chk+match_idx));
-=======
-        match_id = match_need(hash);
-        if (-1 != match_id) {
-            chk[match_id].pvd = provider;
-            chk[match_id].num_p = 1;
-            pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
-            enqueue(q, (void *)pkt);
-            enqueue(chunk_queue,(void*)(chk+match_id));
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
         }
         hash += SHA1_HASH_SIZE;
     }
@@ -305,13 +271,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
     int index = 0, i = 0;
     char hash_buffer[HASH_HEX_SIZE] = {0};
     char hash_hex[HASH_HEX_SIZE] = {0};
-<<<<<<< HEAD
     char buffer[BT_FILENAME_LEN+5] = {0};
-=======
-    uint8_t chunk_hash[SHA1_HASH_SIZE];
-    char buffer[BT_FILENAME_LEN+5] = {0};
-    char data_buffer[1024] = {0};
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     char datafile[BT_FILENAME_LEN] = {0};
     char index_buffer[5] = {0};
     char *src;
@@ -431,11 +391,7 @@ data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char 
  *  @param pkt pkt to be send
  *  @return void
  */
-<<<<<<< HEAD
 void send_WhoHas(data_packet_t* pkt) {
-=======
-void Send_WhoHas(data_packet_t* pkt) {
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     char str[20];
     struct bt_peer_s* peer = config.peers;
 
@@ -453,7 +409,6 @@ void Send_WhoHas(data_packet_t* pkt) {
 }
 
 
-<<<<<<< HEAD
 void flood_WhoHas() {
     if (VERBOSE)
         fprintf(stderr, "Entering Flood WhoHas!\n");
@@ -481,13 +436,6 @@ void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int type = pkt->header.packet_type;
     if (VERBOSE)
         fprintf(stderr, "send %s pkt!*********\n", type2str[type]);
-=======
-
-void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
-    int pkt_size = pkt->header.packet_len;
-    if (VERBOSE)
-        fprintf(stderr, "send %s pkt!*********\n",  type2str[pkt->header.packet_type]);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     print_pkt(pkt);
     hostToNet(pkt);
     spiffy_sendto(config.sock, pkt, pkt_size, 0, to, sizeof(*to));
@@ -503,10 +451,6 @@ void store_data(chunk_t* chunk, data_packet_t* pkt) {
 
 void cat_chunks() {
     FILE* fdout;
-<<<<<<< HEAD
-=======
-    char *dst;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     int i;
     int num_chk = job.num_chunk;
     int size = num_chk * CHUNK_SIZE;
@@ -516,27 +460,11 @@ void cat_chunks() {
 
 
     fdout = fopen(config.output_file, "w");
-<<<<<<< HEAD
     for (i = 0; i < num_chk; i++) {
         fwrite(chk_arr[i].data,1,CHUNK_SIZE,fdout);
     }
     fprintf(stderr, "cat finished!!!\n");
     fclose(fdout);
-=======
-    //fseek (fdout, size - 1, SEEK_SET);
-    //write (fdout, "", 1);  // write one byte the last position of output file
-    //fseek (fdout,0,SEEK_SET);
-    //dst = mmap (0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fdout, 0);
-    for (i = 0; i < num_chk; i++) {
-        //memcpy(dst + i*(CHUNK_SIZE), chk_arr[i].data, CHUNK_SIZE);
-        fwrite(chk_arr[i].data,1,CHUNK_SIZE,fdout);
-        //memcpy(null, chk_arr[i].data, CHUNK_SIZE);           
-
-    }
-    fprintf(stderr, "cat finished!!!\n");
-    fclose(fdout);
-    //munmap(dst, size);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 }
 
 
@@ -652,8 +580,5 @@ void freeJob() {
     job.num_chunk = 0;
 }
 
-<<<<<<< HEAD
 
 
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550

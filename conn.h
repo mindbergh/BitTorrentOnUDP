@@ -57,11 +57,8 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer);
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer);
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer);
 void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to);
-<<<<<<< HEAD
 void update_down_conn( down_conn_t* conn, bt_peer_t* peer);
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt);
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 void print_cwnd(up_conn_t *conn);
 
 #endif

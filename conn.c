@@ -35,11 +35,7 @@ void init_up_pool(up_pool_t* pool) {
 	while(i < max) {
 		flags[i++] = 0;
 	}
-<<<<<<< HEAD
 	//fprintf(stderr, "%f\n", job.cwnd);
-=======
-	fprintf(stderr, "%f\n", job.cwnd);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 }
 
 /** @brief Initilize a downloading connection
@@ -98,11 +94,7 @@ queue_t* chunk, queue_t* get_queue) {
 	init_down_conn(&(pool->connection[i]),provider,chunk, get_queue);
 	pool->flag[i] = 1;
 	pool->num++;
-<<<<<<< HEAD
 	//int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
-=======
-	int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 	return pool->connection[i];
 }
 
@@ -240,11 +232,7 @@ void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
  */
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	// construct new data pkt array
-<<<<<<< HEAD
 	data_packet_t** data_pkt_array = DATA_pkt_array_maker(get_pkt);
-=======
-	data_packet_t* data_pkt_array = DATA_pkt_array_maker(get_pkt);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 	conn->receiver = peer;
 	conn->pkt_array = data_pkt_array;
 	conn->l_ack = 0;
@@ -265,19 +253,10 @@ void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 }
 
 void print_cwnd(up_conn_t *conn) {
-<<<<<<< HEAD
     int elapsed;
     job.cwnd = fopen("./problem2-peer.txt", "a+");
     elapsed = get_time_diff(&(config.start_time));
     fprintf(job.cwnd, "%df%d\t%d\t%d\n",config.identity, conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
     fclose(job.cwnd);
-=======
-    double elapsed;
-    //job.cwnd = fopen("./problem2-peer.txt", "a+");
-    //int elapsed = difftime(now,job.start_time);
-    elapsed = get_time_diff(&(config.start_time));
-    //fprintf(job.cwnd, "f%d\t%d\t%d\n", conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
-    //fclose(job.cwnd);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
     //fprintf(job.cwnd, "123");
 }

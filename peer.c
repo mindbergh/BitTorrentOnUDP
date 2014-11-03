@@ -30,10 +30,7 @@
 void peer_run();
 void freeJob(job_t* job);
 void init_hasChunk(char* has_chunk_file);
-<<<<<<< HEAD
 void check_living();
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 
 /* Global variables */
 job_t job;
@@ -78,11 +75,7 @@ void process_inbound_udp(int sock) {
     char buf[PACKETLEN];
     up_conn_t* up_conn;
     down_conn_t* down_conn;
-<<<<<<< HEAD
     void *ptr;
-=======
-    struct timeval* last_time;
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 
     fromlen = sizeof(from);
     spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen);
@@ -114,14 +107,9 @@ void process_inbound_udp(int sock) {
             // check if needed to create new download connection
             if( get_Pkt_Queue->n == 0) {
                 // no need!
-<<<<<<< HEAD
                 free_queue(chunk_queue);
                 free_queue(get_Pkt_Queue);
             
-=======
-                free(chunk_queue);
-                free(get_Pkt_Queue);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
             } else {
                 // add new downloading connection
                 if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
@@ -176,15 +164,10 @@ void process_inbound_udp(int sock) {
                     
                     fprintf(stderr, "finished!\n");
                     job.num_need--;
-<<<<<<< HEAD
                     ptr = dequeue(down_conn->get_queue); // to do free
                     //free(ptr);
                     dequeue(down_conn->chunks); // to do free
 
-=======
-                    dequeue(down_conn->get_queue); // to do free
-                    dequeue(down_conn->chunks); // to do free
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
  
                     if(down_conn->get_queue->head != NULL) {
                         fprintf(stderr, "send next get!\n");
@@ -199,11 +182,7 @@ void process_inbound_udp(int sock) {
                     }
                     // check current downloading connection finished
                     if(job.num_need == 0) {
-<<<<<<< HEAD
                         fprintf(stderr, "GOT %s\n",job.get_chunk_file);
-=======
-                        fprintf(stderr, "all get finished!!!\n");
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
                         // all finished， cat all chunks into one file
                         cat_chunks();
                         // job finished
@@ -258,23 +237,15 @@ void process_inbound_udp(int sock) {
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
                     up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
-<<<<<<< HEAD
                     int old_cwnd = up_conn->cwnd;
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
                     up_conn->cwnd = 1;
                     up_conn->l_available = up_conn->l_ack+1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                     up_conn->duplicate = 0;
-<<<<<<< HEAD
                     if (VERBOSE) {
                         if ((int)old_cwnd != up_conn->cwnd)
                             print_cwnd(up_conn);
                     }
-=======
-                    if (VERBOSE)
-                        print_cwnd(up_conn);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
                 }
             }
             break;
@@ -291,23 +262,7 @@ void process_inbound_udp(int sock) {
         }   
     }
 
-<<<<<<< HEAD
     check_living();
-=======
-    for (i = 0; i < config.max_conn; i++) {
-        if (down_pool.flag[i] != 1) continue;
-        last_time = &(down_pool.connection[i]->last_time);
-        if (get_time_diff(last_time) > 10) {
-            // to do, this conn is timed out
-            // reflood whohas to the associated chunk(s)
-        }
-    }
-
-    /*printf("PROCESS_INBOUND_UDP SKELETON -- replace!\n"
-           "Incoming message from %s:%d\n\n",
-            inet_ntoa(from.sin_addr),
-            ntohs(from.sin_port));*/
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 }
 
 void process_get(char *chunkfile, char *outputfile) {
@@ -322,11 +277,7 @@ void process_get(char *chunkfile, char *outputfile) {
     data_packet_t* cur_pkt = NULL;
     while((cur_pkt = (data_packet_t *)dequeue(whoHasQueue)) != NULL) {
         //fprintf(stderr, "here\n");
-<<<<<<< HEAD
         send_WhoHas(cur_pkt);
-=======
-        Send_WhoHas(cur_pkt);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
         packet_free(cur_pkt);
     }
     
@@ -355,13 +306,10 @@ void peer_run() {
     fd_set readfds;
     struct user_iobuf *userbuf;
     int yes = 1;
-<<<<<<< HEAD
     struct timeval tv;
 
     
 
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 
     if ((userbuf = create_userbuf()) == NULL) {
         perror("peer_run could not allocate userbuf");
@@ -395,14 +343,10 @@ void peer_run() {
         int nfds;
         FD_SET(STDIN_FILENO, &readfds);
         FD_SET(sock, &readfds);
-<<<<<<< HEAD
         
         tv.tv_sec = 10; /* Wait up to 10 seconds. */
         tv.tv_usec = 0;
         nfds = select(sock+1, &readfds, NULL, NULL, &tv);
-=======
-        nfds = select(sock+1, &readfds, NULL, NULL, NULL);
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
                  process_inbound_udp(sock);
@@ -411,7 +355,6 @@ void peer_run() {
                 process_user_input(STDIN_FILENO, userbuf, handle_user_input,
                  "Currently unused");
             }
-<<<<<<< HEAD
         } else {
             //timeout and try to reflood
             if (VERBOSE)
@@ -425,8 +368,6 @@ void peer_run() {
                 if (VERBOSE)
                     fprintf(stderr, "Finish check living\n" );
             }
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
         }
     }
 }
@@ -454,7 +395,6 @@ void init_hasChunk(char* has_chunk_file) {
     } 
     fclose(file);  
 
-<<<<<<< HEAD
 }
 
 void check_living() {
@@ -487,6 +427,4 @@ void check_living() {
 
     if (reflood_flag)
         flood_WhoHas();
-=======
->>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 }

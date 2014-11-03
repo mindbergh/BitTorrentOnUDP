@@ -58,7 +58,9 @@ int init_job(char* chunkFile, char* output_file) {
     fclose(file);
     // set output file address and format
     strcpy(config.output_file,output_file);
+    strcpy(job.get_chunk_file,chunkFile);
     config.output_file[strlen(output_file)] = '\0';
+    job.get_chunk_file[strlen(job.get_chunk_file)] = '\0';
 
     //gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
@@ -249,7 +251,7 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
         if (-1 != match_idx) {
             chk[match_idx].pvd = provider;
             chk[match_idx].num_p = 1;
-            //job.num_living |= (1 << match_idx);   // this chunks is living
+            job.num_living |= (1 << match_idx);   // this chunks is living
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
             enqueue(chunk_queue,(void*)(chk+match_idx));
@@ -408,6 +410,9 @@ void send_WhoHas(data_packet_t* pkt) {
 
 
 void flood_WhoHas() {
+    if (VERBOSE)
+        fprintf(stderr, "Entering Flood WhoHas!\n");
+    
     if (job.num_living == ((1 << (job.num_chunk + 1)) - 1)) {
         if (VERBOSE)
             fprintf(stderr, "All chunks are living!\n");
@@ -574,4 +579,6 @@ void freeJob() {
     job.chunks = NULL;
     job.num_chunk = 0;
 }
+
+
 

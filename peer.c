@@ -30,6 +30,7 @@
 void peer_run();
 void freeJob(job_t* job);
 void init_hasChunk(char* has_chunk_file);
+void check_living();
 
 /* Global variables */
 job_t job;
@@ -68,13 +69,12 @@ int main(int argc, char **argv) {
 
 void process_inbound_udp(int sock) {
     int packet_type = -1;
-    int i, reflood_flag = 0;
+    int i;
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
     up_conn_t* up_conn;
     down_conn_t* down_conn;
-    struct timeval* last_time;
     void *ptr;
 
     fromlen = sizeof(from);
@@ -182,7 +182,7 @@ void process_inbound_udp(int sock) {
                     }
                     // check current downloading connection finished
                     if(job.num_need == 0) {
-                        fprintf(stderr, "all get finished!!!\n");
+                        fprintf(stderr, "GOT %s\n",job.get_chunk_file);
                         // all finished， cat all chunks into one file
                         cat_chunks();
                         // job finished
@@ -200,7 +200,7 @@ void process_inbound_udp(int sock) {
                 // send ACK pkt
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
             }
-            //gettimeofday(&(down_conn->last_time), NULL);  // update last alive time
+            gettimeofday(&(down_conn->last_time), NULL);  // update last alive time
             break;
         }
         case PKT_ACK: {
@@ -237,12 +237,15 @@ void process_inbound_udp(int sock) {
                 up_conn->duplicate++;
                 if(up_conn->duplicate >= 3) {
                     up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;
+                    int old_cwnd = up_conn->cwnd;
                     up_conn->cwnd = 1;
                     up_conn->l_available = up_conn->l_ack+1;
                     up_conn_recur_send(up_conn,(struct sockaddr*) &from);
                     up_conn->duplicate = 0;
-                    if (VERBOSE)
-                        print_cwnd(up_conn);
+                    if (VERBOSE) {
+                        if ((int)old_cwnd != up_conn->cwnd)
+                            print_cwnd(up_conn);
+                    }
                 }
             }
             break;
@@ -259,26 +262,7 @@ void process_inbound_udp(int sock) {
         }   
     }
 
-    // for (i = 0; i < config.max_conn; i++) {
-    //     if (down_pool.flag[i] == 0) continue; // unused conn slot
-    //     down_conn = down_pool.connection[i];
-    //     last_time = &(down_conn->last_time);
-    //     if (get_time_diff(last_time) > 10) {
-    //         chunk_t* chk_ptr;
-    //         while ((chk_ptr = (chunk_t*)dequeue(down_conn->chunks)) != NULL) {
-                
-    //             chk_ptr->pvd = NULL; // this chunk's pvd is dead
-    //             job.num_living &= (~(1 << chk_ptr->id)); // this chunk is dead
-    //             reflood_flag = 1; // need
-    //         }
-    //         de_down_pool(&down_pool, down_conn->provider);           
-    //         // to do, this conn is timed out
-    //         // reflood whohas to the associated chunk(s)
-    //     }
-    // }
-
-    // if (reflood_flag)
-    //     flood_WhoHas();
+    check_living();
 }
 
 void process_get(char *chunkfile, char *outputfile) {
@@ -372,13 +356,18 @@ void peer_run() {
                  "Currently unused");
             }
         } else {
-            // timeout and try to reflood
-            // if (VERBOSE)
-            // //     fprintf(stderr, "Select timed out!!\n");
-            // if (is_job_finished())
-            //     continue;  // no job pending
-            // else 
-            //     flood_WhoHas();
+            //timeout and try to reflood
+            if (VERBOSE)
+                fprintf(stderr, "Select timed out!!\n");
+            if (is_job_finished())
+                continue;  // no job pending
+            else {
+                if (VERBOSE)
+                    fprintf(stderr, "About to check living\n");
+                check_living();
+                if (VERBOSE)
+                    fprintf(stderr, "Finish check living\n" );
+            }
         }
     }
 }
@@ -406,4 +395,36 @@ void init_hasChunk(char* has_chunk_file) {
     } 
     fclose(file);  
 
+}
+
+void check_living() {
+    down_conn_t* down_conn;
+    struct timeval* last_time;
+    int i, reflood_flag = 0;
+    for (i = 0; i < config.max_conn; i++) {
+        if (down_pool.flag[i] == 0) continue; // unused conn slot
+        down_conn = down_pool.connection[i];
+        last_time = &(down_conn->last_time);
+        if (VERBOSE)
+            fprintf(stderr, "About to check time diff!!\n");
+        if (get_time_diff(last_time) > 10000) { // 10 sec = 10000 ms
+            if (VERBOSE)
+                fprintf(stderr, "Down conn timed out:%d\n", down_conn->provider->id);
+            chunk_t* chk_ptr;
+            while ((chk_ptr = (chunk_t*)dequeue(down_conn->chunks)) != NULL) {
+                
+                chk_ptr->pvd = NULL; // this chunk's pvd is dead
+                chk_ptr->cur_size = 0;
+                chk_ptr->num_p = 0;
+                job.num_living &= (~(1 << chk_ptr->id)); // this chunk is dead
+                reflood_flag = 1; // need reflood
+            }
+            de_down_pool(&down_pool, down_conn->provider);           
+            // to do, this conn is timed out
+            // reflood whohas to the associated chunk(s)
+        }
+    }
+
+    if (reflood_flag)
+        flood_WhoHas();
 }

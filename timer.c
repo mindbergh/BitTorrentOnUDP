@@ -11,5 +11,5 @@ int get_time_diff(struct timeval* start) {
 	double t2;
 	gettimeofday(&now, NULL);
 	t2=now.tv_sec+(now.tv_usec/1000000.0);
-	return (int)(t2 - t1)*1000;
+	return (int)((t2 - t1)*1000);
 }

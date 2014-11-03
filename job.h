@@ -56,6 +56,7 @@ typedef struct job_s {
     FILE *cwnd;
     chunk_t* chunks;
     short living_flags;
+    char get_chunk_file[BT_FILENAME_LEN];
 } job_t;
 
 typedef struct header_s {

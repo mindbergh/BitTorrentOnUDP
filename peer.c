@@ -77,6 +77,7 @@ void process_inbound_udp(int sock) {
     down_conn_t* down_conn;
     void *ptr;
     int res;
+    data_packet_t* pkt;
 
     fromlen = sizeof(from);
     while ((res = spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen)) != -1) {
@@ -112,8 +113,21 @@ void process_inbound_udp(int sock) {
                     free_queue(get_Pkt_Queue);
                 
                 } else {
+                    // check if this provider is already in our conn_pool
+
+                    if (NULL != (down_conn = get_down_conn(&down_pool, peer))) {
+                        if (VERBOSE)
+                            fprintf(stderr, "About to enqueue GET\n");
+                        while (pkt = (data_packet_t*)dequeue(get_Pkt_Queue))) {
+                            enqueue(down_conn->get_queue, (void*)pkt);
+                            if (VERBOSE)
+                                fprintf(stderr, "One GET enqueued\n");                            
+                        }
+                        break;
+                    }
+
                     // add new downloading connection
-                    if( (down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
+                    if((down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
                         // downloading connection pool is full!
                         fprintf(stderr, "downloading connection pool is full!\n");
                     } else {

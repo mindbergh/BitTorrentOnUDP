@@ -78,7 +78,7 @@ int spiffy_recvfrom (int socket, void *buffer, size_t size, int flags, struct so
 		retVal -= sizeof(spiffy_header);
 	}
 	if(retVal < 0) {
-		printf("Error on spiffy_recvfrom. errno: %d \n", errno);
+		//printf("Error on spiffy_recvfrom. errno: %d \n", errno);
 	}
 	free(newbuf);
 	return retVal;

@@ -72,7 +72,6 @@ int init_job(char* chunkFile, char* output_file) {
 void clear_job() {
     job.num_chunk = 0; 
     job.num_need  = 0;
-    job.cwnd = NULL;
     job.chunks = NULL;
 }
 

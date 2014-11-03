@@ -34,7 +34,7 @@
 #define PKT_ACK 		4
 #define PKT_DENIED		5      
 #define CHUNK_SIZE      (1 << 19)  //size of a single chunk in Bytes
-#define VERBOSE         1
+#define VERBOSE         0
 #define DEF_MODE   S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH
 
 
@@ -53,7 +53,6 @@ typedef struct job_s {
     int num_chunk;   
     int num_need;
     int num_living;
-    FILE *cwnd;
     chunk_t* chunks;
     short living_flags;
     char get_chunk_file[BT_FILENAME_LEN];

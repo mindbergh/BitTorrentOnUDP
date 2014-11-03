@@ -47,16 +47,25 @@ typedef struct chunk_s {
 	bt_peer_t *pvd; /* providers */
 } chunk_t;
  
+<<<<<<< HEAD
 // num_chunk * 512 * 1024 = file_size;max num_chunk = 4095
+=======
+// num_chunk * 512 * 1024 = file_size max num_chunk = 4095
+>>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 // largest file supports is 2GB - 512KB
 typedef struct job_s {
     int num_chunk;   
     int num_need;
+<<<<<<< HEAD
     int num_living;
     FILE *cwnd;
     chunk_t* chunks;
     short living_flags;
     char get_chunk_file[BT_FILENAME_LEN];
+=======
+    FILE *cwnd;
+    chunk_t* chunks;
+>>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 } job_t;
 
 typedef struct header_s {
@@ -78,7 +87,11 @@ int init_job(char* chunkFile, char* output_file);
 int is_job_finished();
 int IfIHave(uint8_t *hash_start);
 int packet_parser(char* buf);
+<<<<<<< HEAD
 void send_WhoHas(data_packet_t* pkt);
+=======
+void Send_WhoHas(data_packet_t* pkt);
+>>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 void packet_sender(data_packet_t* pkt, struct sockaddr* to);
 queue_t *WhoHas_maker(void);
 data_packet_t *IHave_maker(data_packet_t *whohas_pkt);
@@ -87,7 +100,10 @@ queue_t* GET_maker(data_packet_t *pkt,bt_peer_t* peer, queue_t* chunk_queue);
 data_packet_t* ACK_maker(int ack, data_packet_t* pkt);
 data_packet_t* DENIED_maker();
 void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data);
+<<<<<<< HEAD
 void flood_WhoHas();
+=======
+>>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt);
 data_packet_t *packet_maker(int type, short pkg_len, u_int seq, u_int ack, char *data);
 void store_data(chunk_t* chunk, data_packet_t* pkt);
@@ -100,7 +116,10 @@ void print_pkt(data_packet_t* pkt);
 void print_hash(uint8_t *hash);
 void hostToNet(data_packet_t* pkt);
 void netToHost(data_packet_t* pkt);
+<<<<<<< HEAD
 void clear_job();
+=======
+>>>>>>> 55a3499114b5342d7b4ee4c8fb97ca71b1e83550
 
 
 #endif

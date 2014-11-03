@@ -314,7 +314,7 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
     fstat (data_fd, &statbuf);
     src = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, data_fd, 0);
     close(data_fd);
-    binary2hex(pkt->data,SHA1_HASH_SIZE,hash_hex);
+    binary2hex((uint8_t*)pkt->data,SHA1_HASH_SIZE,hash_hex);
     while(fgets(buffer,60,index_file) != NULL) {
         if(sscanf(buffer,"%s %s\n",index_buffer,hash_buffer) < 2 ) {
             // wrong file format!
@@ -485,7 +485,6 @@ void cat_chunks() {
     FILE* fdout;
     int i;
     int num_chk = job.num_chunk;
-    int size = num_chk * CHUNK_SIZE;
     chunk_t *chk_arr = job.chunks;
 
     assert(job.num_need == 0);
@@ -517,7 +516,7 @@ int is_chunk_finished(chunk_t* chunk) {
     }
     uint8_t hash[SHA1_HASH_SIZE];
     // get hash code
-    shahash(chunk->data,cur_size,hash);
+    shahash((uint8_t*)chunk->data,cur_size,hash);
     // check hash code
 
     if( memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {

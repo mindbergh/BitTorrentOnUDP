@@ -69,7 +69,6 @@ int main(int argc, char **argv) {
 
 void process_inbound_udp(int sock) {
     int packet_type = -1;
-    int i;
     struct sockaddr_in from;
     socklen_t fromlen;
     char buf[PACKETLEN];
@@ -125,7 +124,7 @@ void process_inbound_udp(int sock) {
                     if (NULL != (down_conn = get_down_conn(&down_pool, peer))) {
                         if (VERBOSE)
                             fprintf(stderr, "About to enqueue GET\n");
-                        while (pkt = (data_packet_t*)dequeue(get_Pkt_Queue)) {
+                        while ((pkt = (data_packet_t*)dequeue(get_Pkt_Queue))) {
                             enqueue(down_conn->get_queue, (void*)pkt);
                             enqueue(down_conn->chunks, dequeue(chunk_queue));
                             if (VERBOSE)
@@ -255,7 +254,7 @@ void process_inbound_udp(int sock) {
                     de_up_pool(&up_pool,peer);
                 } else if (up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
                     // valid ack
-                    up_conn->duplicate == 1;
+                    up_conn->duplicate = 1;
                     up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
                     if(VERBOSE)
                         fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
@@ -393,7 +392,7 @@ void peer_run() {
         tv.tv_usec = 0;
 
         if (VERBOSE)
-            fprintf(stderr, "New Select with%ld, %ld\n", tv.tv_sec, tv.tv_usec);
+            fprintf(stderr, "New Select with%ld, %d\n", tv.tv_sec, tv.tv_usec);
 
         nfds = select(sock+1, &readfds, NULL, NULL, &tv);
         if (nfds > 0) {

@@ -30,7 +30,7 @@ void init_up_pool(up_pool_t* pool) {
 	int max = config.max_conn;
 
 	pool->flag = (int*)malloc(sizeof(int)*max);
-	pool->connection = (down_conn_t*)malloc(sizeof(down_conn_t));
+	pool->connection = (up_conn_t**)malloc(sizeof(up_conn_t));
 	int* flags = pool->flag;
 	while(i < max) {
 		flags[i++] = 0;

@@ -67,7 +67,7 @@ void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,
 	(*conn)->pkt_array = pkt_array;
 	(*conn)->l_ack = 0;
 	(*conn)->l_available = 1;
-	(*conn)->duplicate = 0;
+	(*conn)->duplicate = 1;
 	(*conn)->cwnd = INIT_CWND;
 	(*conn)->ssthresh = INIT_SSTHRESH;
 }
@@ -238,7 +238,7 @@ void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	conn->pkt_array = data_pkt_array;
 	conn->l_ack = 0;
 	conn->l_available = 1;
-	conn->duplicate = 0;
+	conn->duplicate = 1;
 	conn->cwnd = INIT_CWND;
 	conn->ssthresh = INIT_SSTHRESH;
 }
@@ -257,5 +257,6 @@ void print_cwnd(up_conn_t *conn) {
     int elapsed;
     elapsed = get_time_diff(&(config.start_time));
     fprintf(config.cwnd, "%df%d\t%d\t%d\n",config.identity, conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
+    fflush(config.cwnd);
     //fprintf(job.cwnd, "123");
 }

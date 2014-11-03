@@ -14,7 +14,11 @@
 
         [TOC-1] Table of Contents
         [CKP-1] Description of Test Cases for Checkpoint 1
+<<<<<<< HEAD
+
+=======
         [CKP-2] Description of Test Cases for Checkpoint 2
+>>>>>>> upstream/master
 
 [CKP-1] Description of Test Cases for Checkpoint 1
 --------------------------------------------------------------------------------
@@ -31,6 +35,11 @@ the sent WHOHAS packet on the other peers
 Set up the network environment, feed one peer with GET command and print out 
 the received IHAVE responses.
 
+<<<<<<< HEAD
+
+
+
+=======
 [CKP-1] Description of Test Cases for Checkpoint 1
 --------------------------------------------------------------------------------
 1. Test for random loss upload and download
@@ -61,5 +70,6 @@ file to check if it is correct.
 Whenever window size chenged by one, write the change into file with the following
 format:
 	<sender id>f<receiver id>\t<window size>\t<time in milisecond>
+>>>>>>> upstream/master
 
 

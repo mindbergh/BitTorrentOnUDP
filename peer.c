@@ -77,7 +77,9 @@ void process_inbound_udp(int sock) {
     down_conn_t* down_conn;
     void *ptr;
     int res;
+    int finished = 0;
     data_packet_t* pkt;
+
 
     fromlen = sizeof(from);
     while ((res = spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen)) != -1) {
@@ -92,7 +94,9 @@ void process_inbound_udp(int sock) {
         switch(packet_type) {
             // case WhoHas
             case PKT_WHOHAS: {
-                fprintf(stderr, "receive whoHash pkt!!!!\n");
+
+                fprintf(stderr, "receive whoHas pkt!!!!\n");
+
                 // Construct I have response pkt
                 data_packet_t* pkt = IHave_maker((data_packet_t*)buf);
                 if( pkt != NULL) {
@@ -118,11 +122,14 @@ void process_inbound_udp(int sock) {
                     if (NULL != (down_conn = get_down_conn(&down_pool, peer))) {
                         if (VERBOSE)
                             fprintf(stderr, "About to enqueue GET\n");
-                        while (pkt = (data_packet_t*)dequeue(get_Pkt_Queue))) {
+                        while (pkt = (data_packet_t*)dequeue(get_Pkt_Queue)) {
                             enqueue(down_conn->get_queue, (void*)pkt);
+                            enqueue(down_conn->chunks, dequeue(chunk_queue));
                             if (VERBOSE)
-                                fprintf(stderr, "One GET enqueued\n");                            
+                                fprintf(stderr, "One GET enqueued\n");              
                         }
+                        free_queue(chunk_queue);
+                        free_queue(get_Pkt_Queue);                                     
                         break;
                     }
 
@@ -176,7 +183,9 @@ void process_inbound_udp(int sock) {
                     // send ACK pkt
                     packet_sender(ack_pkt,(struct sockaddr *) &from);
                     // check if current chunk downloading finished
-                    if(is_chunk_finished((chunk_t*)(down_conn->chunks->head->data))) {
+
+                    if(1 == (finished = is_chunk_finished((chunk_t*)(down_conn->chunks->head->data)))) {
+
                         
                         fprintf(stderr, "finished!\n");
                         job.num_need--;
@@ -206,6 +215,12 @@ void process_inbound_udp(int sock) {
                                 clear_job();
                             }
                         }
+
+                    } else if (-1 == finished) {
+                        // hash wrong
+                        fprintf(stderr, "Hashed wrong, resend last get!\n");
+                        update_down_conn(down_conn,peer);
+                        packet_sender((data_packet_t*)down_conn->get_queue->head->data,(struct sockaddr*) &from);
                     }
 
                 } else {
@@ -231,6 +246,7 @@ void process_inbound_udp(int sock) {
                     de_up_pool(&up_pool,peer);
                 } else if( up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
                     // valid ack
+                    up_conn->duplicate == 1;
                     up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
                     if(VERBOSE)
                         fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
@@ -360,11 +376,16 @@ void peer_run() {
 
     while (1) {
         int nfds;
+        FD_ZERO(&readfds);
         FD_SET(STDIN_FILENO, &readfds);
         FD_SET(sock, &readfds);
         
         tv.tv_sec = 10; /* Wait up to 10 seconds. */
         tv.tv_usec = 0;
+
+        if (VERBOSE)
+            fprintf(stderr, "New Select with%ld, %ld\n", tv.tv_sec, tv.tv_usec);
+
         nfds = select(sock+1, &readfds, NULL, NULL, &tv);
         if (nfds > 0) {
             if (FD_ISSET(sock, &readfds)) {
@@ -384,6 +405,10 @@ void peer_run() {
                 if (VERBOSE)
                     fprintf(stderr, "About to check living\n");
                 check_living();
+
+                if (!is_job_finished())
+                    flood_WhoHas();
+
                 if (VERBOSE)
                     fprintf(stderr, "Finish check living\n" );
             }

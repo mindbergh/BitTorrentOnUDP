@@ -153,8 +153,10 @@ void whohas_data_maker(int num_chunk, chunk_t *chunks, char* data) {
         /* Chunk Hash 20 bytes */
         if (chunks[i].cur_size == 512*1024) // I have this chunk already
             continue;
+
+        memcpy(ptr + num_need * SHA1_HASH_SIZE, chunks[i].hash, SHA1_HASH_SIZE);
         num_need++;
-        memcpy(ptr + i * SHA1_HASH_SIZE, chunks[i].hash, SHA1_HASH_SIZE);
+
     }
     data[0] = num_need; /* Number of chunks */
 }
@@ -254,6 +256,8 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
             pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
             enqueue(chunk_queue,(void*)(chk+match_idx));
+            if (config.peers->next->next != NULL)
+                return q;
         }
         hash += SHA1_HASH_SIZE;
     }
@@ -473,22 +477,25 @@ void cat_chunks() {
  */
 int is_chunk_finished(chunk_t* chunk) {
     int cur_size = chunk->cur_size;
-    float kb = cur_size / 10;
+    float kb = cur_size / 1024;
     if (VERBOSE)
         fprintf(stderr, "check finished!!!\n");
     if (cur_size != CHUNK_SIZE) {
         if (VERBOSE)
             fprintf(stderr, "Not finished yet, cur_size = %.5f\n", kb);
+
         return 0;
     }
     uint8_t hash[SHA1_HASH_SIZE];
     // get hash code
     shahash(chunk->data,cur_size,hash);
     // check hash code
-    if (memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {
+
+    if( memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {
         return 1;
     } else {
-        return 0;
+        return -1;
+
     }
 }
 

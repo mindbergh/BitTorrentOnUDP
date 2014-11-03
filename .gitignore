@@ -36,6 +36,8 @@ test_input_buffer
 # doc
 PROJ2_HOWTO
 *.dat
+cp2_helpFile
+problem2-peer.txt
 
 # dic
 tmp/*

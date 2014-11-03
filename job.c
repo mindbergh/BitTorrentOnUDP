@@ -24,10 +24,9 @@ int init_job(char* chunkFile, char* output_file) {
         return -1; // fail to open job file
 
     int line_number = 0;
-    int i = 0, j;
+    int i = 0;
     char read_buffer[BUF_SIZE];
     char hash_buffer[SHA1_HASH_SIZE*2];
-    chunk_t* this_chunk;
 
     
     /* get chunks number */
@@ -45,19 +44,15 @@ int init_job(char* chunkFile, char* output_file) {
     fseek(file,0,SEEK_SET);
     
     while (fgets(read_buffer,BUF_SIZE,file)) {
-        this_chunk = &(job.chunks[i]);
         sscanf(read_buffer,"%d %s",&(job.chunks[i].id),hash_buffer);
         /* convert ascii to binary hash code */
         hex2binary(hash_buffer,SHA1_HASH_SIZE*2,job.chunks[i].hash);        
         memset(read_buffer,0,BUF_SIZE);
         memset(hash_buffer,0,SHA1_HASH_SIZE*2);
-        this_chunk->pvd = NULL;
-        this_chunk->num_p = 0;
-        this_chunk->cur_size = 0;
-        this_chunk->data = malloc(sizeof(char)*512*1024);
-        for (j = 0; j < BLOCK_SIZE; j++) {
-            this_chunk->block_map[j] = 0;    
-        }
+        job.chunks[i].pvd = NULL;
+        job.chunks[i].num_p = 0;
+        job.chunks[i].cur_size = 0;
+        job.chunks[i].data = malloc(sizeof(char)*512*1024);
         i++;
     }    
     fclose(file);
@@ -66,7 +61,6 @@ int init_job(char* chunkFile, char* output_file) {
     strcpy(job.get_chunk_file,chunkFile);
     config.output_file[strlen(output_file)] = '\0';
     job.get_chunk_file[strlen(job.get_chunk_file)] = '\0';
-    job.cwnd = fopen("./problem2-peer.txt", "a+");
 
     //gettimeofday(&(job.start_time), NULL);
     //fprintf(job.cwnd, "Start!\n");
@@ -78,7 +72,6 @@ int init_job(char* chunkFile, char* output_file) {
 void clear_job() {
     job.num_chunk = 0; 
     job.num_need  = 0;
-    job.cwnd = NULL;
     job.chunks = NULL;
 }
 
@@ -450,22 +443,8 @@ void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
 
 void store_data(chunk_t* chunk, data_packet_t* pkt) {
     int size = pkt->header.packet_len - pkt->header.header_len;
-    int seq_num = pkt->header.seq_num;
-    memcpy(chunk->data+(seq_num - 1) * 1024,pkt->data,size);
+    memcpy(chunk->data+chunk->cur_size,pkt->data,size);
     chunk->cur_size += size;
-    chunk->block_map[seq_num-1] = 1;
-
-}
-
-void update_lst_ask(down_conn_t* down_conn) {
-    chunk_t* cur_chunk = (chunk_t*)(down_conn->chunks->head->data);
-    int i;
-    for (i = (down_conn->next_pkt - 1); i < BLOCK_SIZE; i++) {
-        if (cur_chunk->block_map[i] == 1)
-            continue;
-        else
-            down_conn->next_pkt = i + 1;
-    }
 }
 
 
@@ -496,7 +475,7 @@ int is_chunk_finished(chunk_t* chunk) {
     int cur_size = chunk->cur_size;
     if (VERBOSE)
         fprintf(stderr, "check finished!!!\n");
-    if (cur_size != CHUNK_SIZE) {
+    if( cur_size != CHUNK_SIZE) {
         if (VERBOSE)
             fprintf(stderr, "Not finished yet, cur_size = %d\n", (cur_size>>10));
         return 0;
@@ -505,7 +484,7 @@ int is_chunk_finished(chunk_t* chunk) {
     // get hash code
     shahash(chunk->data,cur_size,hash);
     // check hash code
-    if (memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {
+    if( memcmp(hash,chunk->hash,SHA1_HASH_SIZE) == 0) {
         return 1;
     } else {
         return 0;

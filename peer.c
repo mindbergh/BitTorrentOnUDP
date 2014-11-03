@@ -1,8 +1,8 @@
 /*
  * peer.c
  *
- * Authors: Ming Fang <mingf@andrew.cmu.edu>,
- *          Yao Zhou <>
+ * Authors: Ming Fang <mingf@cs.cmu.edu>,
+ *          Yao Zhou <yaozhou@cs.cmu.edu>
  *          
  * Class: 15-441 (Fall 2014)
  *
@@ -82,7 +82,9 @@ void process_inbound_udp(int sock) {
 
 
     fromlen = sizeof(from);
-    while ((res = spiffy_recvfrom(sock, buf, PACKETLEN, 0, (struct sockaddr *) &from, &fromlen)) != -1) {
+    while ((res = spiffy_recvfrom(sock, buf, PACKETLEN,
+                                  0, (struct sockaddr *) &from,
+                                  &fromlen)) != -1) {
         // change to local format
         netToHost((data_packet_t*)buf);
         // call packet_parser
@@ -109,7 +111,8 @@ void process_inbound_udp(int sock) {
             case PKT_IHAVE: {
                 // Construct Get Pkt response 
                 queue_t* chunk_queue = queue_init();
-                queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf,peer,chunk_queue);
+                queue_t* get_Pkt_Queue = GET_maker((data_packet_t*)buf,
+                                                    peer,chunk_queue);
                 // check if needed to create new download connection
                 if( get_Pkt_Queue->n == 0) {
                     // no need!
@@ -134,9 +137,11 @@ void process_inbound_udp(int sock) {
                     }
 
                     // add new downloading connection
-                    if((down_conn = en_down_pool(&down_pool,peer,chunk_queue,get_Pkt_Queue)) == NULL) {
+                    if((down_conn = en_down_pool(&down_pool,peer,
+                                                 chunk_queue,
+                                                 get_Pkt_Queue)) == NULL) {
                         // downloading connection pool is full!
-                        fprintf(stderr, "downloading connection pool is full!\n");
+                        fprintf(stderr, "downloading conn pool is full!\n");
                     } else {
                         // send out first GET packets 
                         packet_sender((data_packet_t*)(down_conn->get_queue->head->data),(struct sockaddr*) &from);
@@ -171,20 +176,22 @@ void process_inbound_udp(int sock) {
 
             case PKT_DATA: {
                 if(VERBOSE)
-                    fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
+                    fprintf(stderr, "receive data pkt,seq%d\n",
+                                        ((data_packet_t*)buf)->header.seq_num);
                 down_conn = get_down_conn(&down_pool,peer);
-                //fprintf(stderr, "current downloading chunk id:%d\n",((chunk_t*)(down_conn->chunks->head->data))->id);
                 // check ack number 
                 if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
                     // store data
-                    store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
+                    store_data((chunk_t*)(down_conn->chunks->head->data),
+                                          (data_packet_t*)buf);
                     // Construct ACK pkt
-                    data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),(data_packet_t*)buf);
+                    data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),
+                                                       (data_packet_t*)buf);
                     // send ACK pkt
                     packet_sender(ack_pkt,(struct sockaddr *) &from);
                     // check if current chunk downloading finished
 
-                    if(1 == (finished = is_chunk_finished((chunk_t*)(down_conn->chunks->head->data)))) {
+                    if (1 == (finished = is_chunk_finished((chunk_t*)(down_conn->chunks->head->data)))) {
 
                         
                         fprintf(stderr, "finished!\n");
@@ -228,7 +235,8 @@ void process_inbound_udp(int sock) {
                     if(VERBOSE)
                         fprintf(stderr, "got invalid data pkt\n");
                     // Construct ACK pkt
-                    data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,(data_packet_t*)buf);
+                    data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,
+                                                       (data_packet_t*)buf);
                     // send ACK pkt
                     packet_sender(ack_pkt,(struct sockaddr *) &from);
                 }
@@ -237,14 +245,15 @@ void process_inbound_udp(int sock) {
             }
             case PKT_ACK: {
                 if(VERBOSE)
-                    fprintf(stderr, "recieve ACK:%d!\n",((data_packet_t*)buf)->header.ack_num );
+                    fprintf(stderr, "recieve ACK:%d!\n",
+                                     ((data_packet_t*)buf)->header.ack_num );
                 // continue send data pkt if not finished
                 up_conn = get_up_conn(&up_pool,peer);
                 // check ACK
                 if( ((data_packet_t*)buf)->header.ack_num == 512) {
                     // downloading finished
                     de_up_pool(&up_pool,peer);
-                } else if( up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
+                } else if (up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
                     // valid ack
                     up_conn->duplicate == 1;
                     up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
@@ -416,6 +425,10 @@ void peer_run() {
     }
 }
 
+/** @brief Init has chunk struct
+ *  @param has_chunk_file the path to haschunk file
+ *  @return Void
+ */
 void init_hasChunk(char* has_chunk_file) {
 
     FILE* file = fopen(has_chunk_file,"r");
@@ -441,6 +454,9 @@ void init_hasChunk(char* has_chunk_file) {
 
 }
 
+/** @brief Check if any conn is dead
+ *  @return Void
+ */
 void check_living() {
     down_conn_t* down_conn;
     struct timeval* last_time;
@@ -453,7 +469,8 @@ void check_living() {
             fprintf(stderr, "About to check time diff!!\n");
         if (get_time_diff(last_time) > 10000) { // 10 sec = 10000 ms
             if (VERBOSE)
-                fprintf(stderr, "Down conn timed out:%d\n", down_conn->provider->id);
+                fprintf(stderr, "Down conn timed out:%d\n", 
+                                               down_conn->provider->id);
             chunk_t* chk_ptr;
             while ((chk_ptr = (chunk_t*)dequeue(down_conn->chunks)) != NULL) {
                 

@@ -69,16 +69,27 @@ int init_job(char* chunkFile, char* output_file) {
     return 0;
 }
 
+/** @brief Clear a job
+ *  @return VOID
+ */
 void clear_job() {
     job.num_chunk = 0; 
     job.num_need  = 0;
     job.chunks = NULL;
 }
 
+/** @brief Check if current job is finished
+ *  @return void
+ */
 int is_job_finished() {
     return job.num_need == 0;    
 }
 
+/** @brief Check if a given pkt is vaild or return pkt tpye
+ *  @param ptr to pkt to be check
+ *  @return pkt type if vaild
+ *          -1 if invaild
+ */
 int packet_parser(char* buf) {
 
     data_packet_t* pkt = (data_packet_t*) buf;
@@ -119,7 +130,8 @@ queue_t *WhoHas_maker() {
             pkt = packet_maker(PKT_WHOHAS, pkt_len, 0, 0, data);
             enqueue(q, (void *)pkt);
         }
-        m = job.num_chunk - n * MAX_CHUNK; /* number of chunks can fit into one pkt */
+        /* number of chunks can fit into one pkt */
+        m = job.num_chunk - n * MAX_CHUNK; 
         pkt_len = HEADERLEN + 4 + m * SHA1_HASH_SIZE;
         whohas_data_maker(m, job.chunks + n * MAX_CHUNK, data);
         pkt = packet_maker(PKT_WHOHAS, pkt_len, 0, 0, data);
@@ -232,7 +244,8 @@ int IfIHave(uint8_t *hash_start) {
  *  @return NULL I dont need to send GET this provider.
  *          a queue of GET pkt
  */ 
-queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk_queue) {
+queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider,
+                                             queue_t* chunk_queue) {
     assert(ihave_pkt->header.packet_type == PKT_IHAVE);
     int num = ihave_pkt->data[0]; // num of chunk that peer has
     //int num_match = 0;
@@ -253,7 +266,9 @@ queue_t* GET_maker(data_packet_t *ihave_pkt, bt_peer_t* provider, queue_t* chunk
             chk[match_idx].pvd = provider;
             chk[match_idx].num_p = 1;
             job.num_living |= (1 << match_idx);   // this chunks is living
-            pkt = packet_maker(PKT_GET, HEADERLEN + SHA1_HASH_SIZE, 0, 0, (char *)hash);
+            pkt = packet_maker(PKT_GET,
+                               HEADERLEN + SHA1_HASH_SIZE,
+                               0, 0, (char *)hash);
             enqueue(q, (void *)pkt);
             enqueue(chunk_queue,(void*)(chk+match_idx));
             if (config.peers->next->next != NULL)
@@ -313,9 +328,9 @@ data_packet_t** DATA_pkt_array_maker(data_packet_t* pkt) {
                 //fseek(data_file,index,SEEK_SET);
                 for (i = 0;i < 512;i++) {
                     // load data
-                    //fread(data_buffer,1,1024,data_file);
-                    data_pkt_array[i] = packet_maker(PKT_DATA,1040,i+1,0,src+index*CHUNK_SIZE+i*1024);
-                    //memset(data_buffer,0,1024);
+                    data_pkt_array[i] = packet_maker(PKT_DATA,
+                                                1040,i+1,0,
+                                                src+index*CHUNK_SIZE+i*1024);
                 }
                 munmap(src,statbuf.st_size);
                 print_pkt((data_packet_t*)(data_pkt_array[0]));
@@ -376,7 +391,8 @@ int match_need(uint8_t *hash) {
  *  @param data the pointer to data (memcpy needed)
  *  @return pointer to the pkt genereted
  */
-data_packet_t *packet_maker(int type, short pkt_len, u_int seq, u_int ack, char *data) {
+data_packet_t *packet_maker(int type, short pkt_len, u_int seq,
+                            u_int ack, char *data) {
     data_packet_t *pkt = (data_packet_t *)malloc(sizeof(data_packet_t));
     pkt->header.magicnum = 15441; /* Magic number */
     pkt->header.version = 1;      /* Version number */
@@ -411,7 +427,9 @@ void send_WhoHas(data_packet_t* pkt) {
     }
 }
 
-
+/** @brief Flood whohas pkt to all peer in the network
+ *  @return void
+ */
 void flood_WhoHas() {
     if (VERBOSE)
         fprintf(stderr, "Entering Flood WhoHas!\n");
@@ -433,7 +451,11 @@ void flood_WhoHas() {
     free_queue(whoHasQueue);
 }
 
-
+/** @brief Send a pkt
+ *  @param pkt pkt to be send
+ *  @param to the destination
+ *  @return void
+ */
 void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     int pkt_size = pkt->header.packet_len;
     int type = pkt->header.packet_type;
@@ -445,13 +467,20 @@ void packet_sender(data_packet_t* pkt, struct sockaddr* to) {
     netToHost(pkt);
 }
 
+/** @brief Store data of given DATA pkt into chunk struct
+ *  @param chunk corresponding chunk
+ *  @param pkt given DATA pkt
+ *  @return void
+ */
 void store_data(chunk_t* chunk, data_packet_t* pkt) {
     int size = pkt->header.packet_len - pkt->header.header_len;
     memcpy(chunk->data+chunk->cur_size,pkt->data,size);
     chunk->cur_size += size;
 }
 
-
+/** @brief Cat all chunk into a file
+ *  @return void
+ */
 void cat_chunks() {
     FILE* fdout;
     int i;
@@ -579,13 +608,12 @@ void print_hash(uint8_t *hash) {
 }
 
 
-
+/** @brief Free a job
+ *  @return void
+ */
 void freeJob() {    
     /* free each chunks */
     free(job.chunks);
     job.chunks = NULL;
     job.num_chunk = 0;
 }
-
-
-

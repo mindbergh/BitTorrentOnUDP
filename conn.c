@@ -8,13 +8,13 @@ extern job_t job;
 
 /** @brief Initilize a downloading queue
  *  @param The pointer to the pool for initialization
- *  @return null
+ *  @return Void
  */
 void init_down_pool(down_pool_t* pool) {
 	int i = 0 ;
 	int max = config.max_conn;
 	pool->flag = (int*)malloc(sizeof(int)*max);
-	pool->connection = (down_conn_t**)malloc(sizeof(down_conn_t*)*max);	
+	pool->connection = (down_conn_t**)malloc(sizeof(down_conn_t*)*max);
 	int* flags = pool->flag;
 	while(i < max) {
 		flags[i++] = 0;
@@ -23,7 +23,7 @@ void init_down_pool(down_pool_t* pool) {
 
 /** @brief Initilize a uploading queue
  *  @param The pointer to the pool for initialization
- *  @return null
+ *  @return Void
  */
 void init_up_pool(up_pool_t* pool) {
 	int i = 0 ;
@@ -42,7 +42,7 @@ void init_up_pool(up_pool_t* pool) {
  *  @param pointer to the connection for initialization
  *  @param Pointer to the peer which at the another side
  *  @param chunk for downloading
- *  @return null
+ *  @return Void
  */
 void init_down_conn(down_conn_t** conn, bt_peer_t* provider, 
 	queue_t* chunk, queue_t* get_queue) {
@@ -58,7 +58,7 @@ void init_down_conn(down_conn_t** conn, bt_peer_t* provider,
  *  @param pointer to the connection for initialization
  *  @param Pointer to the peer which at the another side
  *  @param packet array which contains the packet to be sent
- *  @return null
+ *  @return Void
  */
 void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,  
 	data_packet_t** pkt_array) {
@@ -77,7 +77,7 @@ void init_up_conn(up_conn_t** conn, bt_peer_t* receiver,
  *  @param Pointer to the peer which at the another side
  *  @param the list of all chunks which currect connection associate
  *  @param the get requests queue
- *  @return null if pool is full, new connection if added successfully
+ *  @return Void if pool is full, new connection if added successfully
  */
 down_conn_t* en_down_pool(down_pool_t* pool,bt_peer_t* provider, 
 queue_t* chunk, queue_t* get_queue) { 
@@ -94,7 +94,6 @@ queue_t* chunk, queue_t* get_queue) {
 	init_down_conn(&(pool->connection[i]),provider,chunk, get_queue);
 	pool->flag[i] = 1;
 	pool->num++;
-	//int pkt_size = ((data_packet_t*)(pool->connection[i]->get_queue->head->data))->header.packet_len;
 	return pool->connection[i];
 }
 
@@ -103,7 +102,7 @@ queue_t* chunk, queue_t* get_queue) {
  *  @param Pointer to the peer which at the another side
  *  @param the list of all chunks which currect connection associate
  *  @param the get requests queue
- *  @return null if pool is full, new connection if added successfully
+ *  @return Void if pool is full, new connection if added successfully
  */
 up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,  
 	data_packet_t** pkt_array) { 
@@ -126,7 +125,7 @@ up_conn_t* en_up_pool(up_pool_t* pool,bt_peer_t* receiver,
 /** @brief remove a certain connection from the upload pool
  *  @param upload pool
  *  @param the peer which connection associate with 
- *  @return null
+ *  @return Void
  */
 void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
@@ -152,7 +151,7 @@ void de_up_pool(up_pool_t* pool,bt_peer_t* peer) {
 /** @brief remove a certain connection from the download pool
  *  @param download pool
  *  @param the peer which connection associate with 
- *  @return null
+ *  @return Void
  */
 void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 	int i = 0;
@@ -177,7 +176,8 @@ void de_down_pool(down_pool_t* pool,bt_peer_t* peer) {
 /** @brief get the pointer to a certain connection from the download pool
  *  @param download pool
  *  @param the peer which connection associate with 
- *  @return NULL if no such connection found, a pointer to the connection if is in the pool
+ *  @return Void if no such connection found, a pointer to the connection if 
+ *               is in the pool
  */
 down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
@@ -195,7 +195,8 @@ down_conn_t* get_down_conn(down_pool_t* pool, bt_peer_t* peer) {
 /** @brief get the pointer to a certain connection from the upload pool
  *  @param upload pool
  *  @param the peer which connection associate with 
- *  @return NULL if no such connection found, a pointer to the connection if is in the pool
+ *  @return Void if no such connection found, a pointer to the connection if is
+ *               in the pool
  */
 up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 	int i = 0; 
@@ -213,14 +214,16 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
 /** @brief recursively send data packet from upload connection
  *  @param upload pool
  *  @param the address where pkt is going to be send to
- *  @return NULL
+ *  @return Void
  */
 void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
-	while(conn->l_available <= 512 && conn->l_available - conn->l_ack <= conn->cwnd) {
+	while(conn->l_available <= 512 && 
+		  conn->l_available - conn->l_ack <= conn->cwnd) {
 		if (VERBOSE)
 			fprintf(stderr, "send data:%d!!!!\n",conn->l_available);
 		//print_pkt((data_packet_t*)(conn->pkt_array[conn->l_available-1]));
-		packet_sender((data_packet_t*)(conn->pkt_array[conn->l_available-1]),to);
+		packet_sender((data_packet_t*)(conn->pkt_array[conn->l_available-1]),
+			          to);
 		conn->l_available++;
 	}
 }
@@ -229,7 +232,7 @@ void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
  *  @param upload connection
  *	@param receiver peer
  *  @param new get packet
- *  @return NULL
+ *  @return Void
  */
 void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 	// construct new data pkt array
@@ -246,17 +249,21 @@ void update_up_conn(up_conn_t* conn, bt_peer_t* peer, data_packet_t* get_pkt) {
 /** @brief update the download conection when one chunk finished
  *  @param download connection
  *  @param provider
- *  @return NULL
+ *  @return Void
  */
 void update_down_conn( down_conn_t* conn, bt_peer_t* peer) {
 	// removed finished GET request
 	conn->next_pkt = 1;
 }
 
+/** @brief helper for print out congestion window
+ *  @param download connection
+ *  @return Void
+ */
 void print_cwnd(up_conn_t *conn) {
     int elapsed;
     elapsed = get_time_diff(&(config.start_time));
-    fprintf(config.cwnd, "%df%d\t%d\t%d\n",config.identity, conn->receiver->id, (int)(conn->cwnd), (int)elapsed);
+    fprintf(config.cwnd, "%df%d\t%d\t%d\n",config.identity, conn->receiver->id, 
+    	                                  (int)(conn->cwnd), (int)elapsed);
     fflush(config.cwnd);
-    //fprintf(job.cwnd, "123");
 }

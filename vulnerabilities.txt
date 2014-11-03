@@ -15,6 +15,7 @@
 
         [TOC-1] Table of Contents
         [CKP-1] Description of Vulnerabilities for Checkpoint 1
+        [CKP-2] Description of Vulnerabilities for Checkpoint 2
 
 [CKP-1] Description of Vulnerabilities for Checkpoint 1
 --------------------------------------------------------------------------------
@@ -22,3 +23,8 @@
 Currently, we have not implemented timeout and retransmission. If the responding
 IHAVE packet were somewhat dropped, the sender would not resent WHOHAS packets.
 This may result in some downloading jobs cannot be successfully completed.
+
+2.
+For each peer pair, the providing side could only be able to serve one GET request
+at at time. If the sending side send multiple GET request to the providing side 
+consecutively, none of chunks could be downloaded entirely.

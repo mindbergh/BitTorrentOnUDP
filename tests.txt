@@ -1,7 +1,7 @@
 ################################################################################
 # TESTS                                                                        #
 #                                                                              #
-# Description: This file describes the test methods for proj2-cp1              #
+# Description: This file contains several test methods for project2            #
 #                                                                              #
 # Authors: Ming Fang <mingf@cs.cmu.edu>, Yao Zhou <yaozhou@cs.cmu.edu>         #
 #                                                                              #
@@ -14,11 +14,7 @@
 
         [TOC-1] Table of Contents
         [CKP-1] Description of Test Cases for Checkpoint 1
-<<<<<<< HEAD
-
-=======
         [CKP-2] Description of Test Cases for Checkpoint 2
->>>>>>> upstream/master
 
 [CKP-1] Description of Test Cases for Checkpoint 1
 --------------------------------------------------------------------------------
@@ -29,47 +25,42 @@ and print out human-readable header information.
 
 2. Test for WHOHAS
 Set up the network environment, feed one peer with GET command and print out 
-the sent WHOHAS packet on the other peers
+the sent WHOHAS packet.
 
 3. Test for IHAVE
 Set up the network environment, feed one peer with GET command and print out 
 the received IHAVE responses.
 
-<<<<<<< HEAD
-
-
-
-=======
-[CKP-1] Description of Test Cases for Checkpoint 1
+[CKP-2] Description of Test Cases for Checkpoint 2
 --------------------------------------------------------------------------------
 1. Test for random loss upload and download
-Set up a network topography of only two peer, feed one peer with GET command
-the other peer is able to upload and the first peer is able to download. Run md5
-on the downloaded file to check if it is correct
+Set up a poor network topography of only two peers, feed one peer with GET command.
+One peer is going to download files from another peer with packet random loss 
+in the network. Peers should be able to handle random packet loss situation. 
+Finally, run MD5 on the downloaded file to check if it is correct.
 
 2. Test for concurrent uploads
-Set up a network topography of 3 peer, feed 2 of them with GET commands
-the 3rd peer is able to upload requested chunks to corresponding peers and
-the run md5 on the downloaded files to check if they are correct.
+Set up a network topography of 3 peers, feed 2 of them with GET commands.
+The 3rd peer is able to upload requested chunks to corresponding peers.
+Finally, run MD5 on the downloaded files to check if they are correct.
 
 3. Test for concurrent downloads
-Set up a network topography of 3 peer, feed 1 of them with GET command which
-echo of other 2 peers has part of request file. The 1st peer is able to
+Set up a network topography of 3 peers, feed 1 of them with GET command which
+echo of other 2 peers which has part of request file. The 1st peer is able to
 flood request to the other 2 and is able to download concurrently.
-Run md5 on the downloaded file to check if it is correct.
+Run MD5 on the downloaded file to check if it is correct.
 
 4. Test for concurrent crashes
-Set up a network topography of 3 peer, feed 1 of them with GET command which
+Set up a network topography of 3 peers, feed 1 of them with GET command which
 both of other 2 peers have the request file. The 1st peer is able to
 flood request to the other 2 and is able to start downloading. Before finishing,
 Manually kill one of the sending peer, the 1st peer is able to reflood request and 
-download file from the 3rd living peer after timed out. Run md5 on the downloaded
+download file from the 3rd living peer after timed out. Run MD5 on the downloaded
 file to check if it is correct.
 
 5. Test for changing of window size.
-Whenever window size chenged by one, write the change into file with the following
+Whenever window size changed by at least one, write the change into file with the following
 format:
-	<sender id>f<receiver id>\t<window size>\t<time in milisecond>
->>>>>>> upstream/master
+	<sender id>f<receiver id>\t<window size>\t<time in millisecond>
 
 

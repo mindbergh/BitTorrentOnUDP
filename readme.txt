@@ -28,7 +28,7 @@ Here is a listing of all files associated with Recitation 1 and what their'
 purpose is:
 
      .../readme.txt              - Current document 
-     .../vulnerabilities.txt     - File contains the potential vulnerabilitis of this project
+     .../vulnerabilities.txt     - File contains the potential vulnerabilities of this project
      .../test.txt                - File contains test case
      .../bt_parse.[c.h]          - Parse command line and config file
      .../chunk.[c.h]             - Process chunks
@@ -45,7 +45,7 @@ purpose is:
      .../nodes.map               - A map contains all nodes in the network
      .../peer.c                  - Process peers(main function)
      .../queue.[c|h]             - A generic queue  
-     .../server.c                - A simple s   erver which is used to test UDP connection
+     .../server.c                - A simple s   server which is used to test UDP connection
      .../sha.c.[c|h]             - SHA-1 hash generator
      .../spiffy.[c|h]            - A simple network simulator
      .../test_input_buffer.c     - A simple test for user input
@@ -57,15 +57,15 @@ purpose is:
 
 [DES-3] Description of Design for checkpoint1
 --------------------------------------------------------------------------------
-This project implements a peer to peer download applicaiton. By checkpoint 1, we have 
+This project implements a peer to peer download application. By checkpoint 1, we have 
 implemented the following functionalities:
-1 Peer initialized with the knowledge of self information including identity hasChunks, 
-  other reachable peers.
-2 Peer is able to receive GET command typed on the comamand line.
+1 Peer initialized with the knowledge of self information including identity, hasChunks, 
+  and other reachable peers.
+2 Peer is able to receive GET command from the command line.
 3 Peer is able to parse the GET command and send WHOHAS packet to all reachable peers to
-  discover available data
+  discover available peers which has the desired file.
 4 Peer is able to generate IHAVE response to received WHOHAS packet and send back. Peer
-  does not send back IHAVE response if it does not have any requested data
+  does not send back IHAVE response if it does not have any requested file
 
 [DES-4] Description of Design for checkpoint2
 --------------------------------------------------------------------------------
@@ -77,6 +77,8 @@ implemented the following functionalities:
   and a ssthresh of 64. The window size is changing at the time of receiving ACK
   packet and the changing value depends on the current state of sending peer, which is either
   slow start or congestion avoidance.
-4 When a peer receive a DATA packet, it is able to, according to the seqence number of DATA
+4 When a peer receive a DATA packet, it is able to, according to the sequence number of DATA
   packet, generate corresponding ACK packet and decide whether to store the data or drop it.
-5 A peer is able to maintain a upload pool and a download pool with given number of connections
+5 A peer is able to maintain a upload pool and a download pool with given number of connections.
+6 when there’s a timeout occurred(10 seconds no response), the downloading peer is able to find 
+  other available peers to re-start download.

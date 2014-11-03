@@ -217,7 +217,8 @@ up_conn_t* get_up_conn(up_pool_t* pool, bt_peer_t* peer) {
  */
 void up_conn_recur_send(up_conn_t* conn, struct sockaddr* to) {
 	while(conn->l_available <= 512 && conn->l_available - conn->l_ack <= conn->cwnd) {
-		fprintf(stderr, "send data:%d!!!!\n",conn->l_available);
+		if (VERBOSE)
+			fprintf(stderr, "send data:%d!!!!\n",conn->l_available);
 		//print_pkt((data_packet_t*)(conn->pkt_array[conn->l_available-1]));
 		packet_sender((data_packet_t*)(conn->pkt_array[conn->l_available-1]),to);
 		conn->l_available++;

@@ -149,7 +149,8 @@ void process_inbound_udp(int sock) {
             }
 
             case PKT_DATA: {
-                fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
+                if(VERBOSE)
+                    fprintf(stderr, "receive data pkt,seq%d\n",((data_packet_t*)buf)->header.seq_num);
                 down_conn = get_down_conn(&down_pool,peer);
                 //fprintf(stderr, "current downloading chunk id:%d\n",((chunk_t*)(down_conn->chunks->head->data))->id);
                 // check ack number 
@@ -196,7 +197,8 @@ void process_inbound_udp(int sock) {
 
                 } else {
                     // wrong data packet!!!
-                    fprintf(stderr, "got invalid data pkt\n");
+                    if(VERBOSE)
+                        fprintf(stderr, "got invalid data pkt\n");
                     // Construct ACK pkt
                     data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,(data_packet_t*)buf);
                     // send ACK pkt
@@ -206,7 +208,8 @@ void process_inbound_udp(int sock) {
                 break;
             }
             case PKT_ACK: {
-                fprintf(stderr, "recieve ACK:%d!\n",((data_packet_t*)buf)->header.ack_num );
+                if(VERBOSE)
+                    fprintf(stderr, "recieve ACK:%d!\n",((data_packet_t*)buf)->header.ack_num );
                 // continue send data pkt if not finished
                 up_conn = get_up_conn(&up_pool,peer);
                 // check ACK
@@ -216,7 +219,8 @@ void process_inbound_udp(int sock) {
                 } else if( up_conn->l_ack+1 <= ((data_packet_t*)buf)->header.ack_num) {
                     // valid ack
                     up_conn->l_ack = ((data_packet_t*)buf)->header.ack_num;
-                    fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
+                    if(VERBOSE)
+                        fprintf(stderr, "%dACKed!\n",up_conn->l_ack);
                     if( up_conn->cwnd < up_conn->ssthresh+0.0) {
                         // slow start state
                         up_conn->cwnd += 1;
@@ -234,7 +238,8 @@ void process_inbound_udp(int sock) {
                     }
                 } else if( up_conn->l_ack == ((data_packet_t*)buf)->header.ack_num) {
                     // duplicate ack
-                    fprintf(stderr, "got duplicate!:%d\n",up_conn->duplicate+1 );
+                    if (VERBOSE)
+                        fprintf(stderr, "got duplicate!:%d\n",up_conn->duplicate+1 );
                     up_conn->duplicate++;
                     if(up_conn->duplicate >= 3) {
                         up_conn->ssthresh = up_conn->cwnd/2>2?up_conn->cwnd/2:2;

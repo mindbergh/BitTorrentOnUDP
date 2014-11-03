@@ -155,8 +155,9 @@ void process_inbound_udp(int sock) {
             if(down_conn->next_pkt == ((data_packet_t*)buf)->header.seq_num) {
                 // store data
                 store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
+                update_lst_ask(down_conn);
                 // Construct ACK pkt
-                data_packet_t* ack_pkt = ACK_maker(++(down_conn->next_pkt),(data_packet_t*)buf);
+                data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt-1,(data_packet_t*)buf);
                 // send ACK pkt
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
                 // check if current chunk downloading finished
@@ -197,6 +198,7 @@ void process_inbound_udp(int sock) {
                 fprintf(stderr, "got invalid data pkt\n");
                 // Construct ACK pkt
                 data_packet_t* ack_pkt = ACK_maker(down_conn->next_pkt,(data_packet_t*)buf);
+                store_data((chunk_t*)(down_conn->chunks->head->data),(data_packet_t*)buf);
                 // send ACK pkt
                 packet_sender(ack_pkt,(struct sockaddr *) &from);
             }
@@ -400,7 +402,7 @@ void init_hasChunk(char* has_chunk_file) {
 void check_living() {
     down_conn_t* down_conn;
     struct timeval* last_time;
-    int i, reflood_flag = 0;
+    int i, j, reflood_flag = 0;
     for (i = 0; i < config.max_conn; i++) {
         if (down_pool.flag[i] == 0) continue; // unused conn slot
         down_conn = down_pool.connection[i];
@@ -416,6 +418,8 @@ void check_living() {
                 chk_ptr->pvd = NULL; // this chunk's pvd is dead
                 chk_ptr->cur_size = 0;
                 chk_ptr->num_p = 0;
+                for (j = 0; j < BLOCK_SIZE; j++)
+                    chk_ptr->block_map[j] = 0;
                 job.num_living &= (~(1 << chk_ptr->id)); // this chunk is dead
                 reflood_flag = 1; // need reflood
             }

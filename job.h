@@ -34,6 +34,7 @@
 #define PKT_ACK 		4
 #define PKT_DENIED		5      
 #define CHUNK_SIZE      (1 << 19)  //size of a single chunk in Bytes
+#define BLOCK_SIZE      512
 #define VERBOSE         1
 #define DEF_MODE   S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH
 
@@ -44,6 +45,7 @@ typedef struct chunk_s {
 	char *data;
     int cur_size;
 	int num_p;
+    uint8_t block_map[BLOCK_SIZE];
 	bt_peer_t *pvd; /* providers */
 } chunk_t;
  

@@ -190,7 +190,6 @@ void process_inbound_udp(int sock) {
                             // job finished
                             if(is_job_finished()) {
                                 clear_job();
-                                exit(0);
                             }
                         }
                     }
